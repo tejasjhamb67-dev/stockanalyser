@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stockanalyser"
+version = "0.1.0"
+description = "A multi-lens equity analysis engine: technical, fundamental, forensic, sectoral and qualitative analysis that turns a company name into a framework + dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "TJ" }]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+# Live data providers — installed on demand, imported lazily.
+live = [
+    "yfinance>=0.2.40",
+    "requests>=2.31",
+]
+# LLM-backed narrative synthesis (earnings-call reasoning, thesis generation).
+llm = [
+    "anthropic>=0.40",
+]
+dev = [
+    "pytest>=7.4",
+]
+
+[project.scripts]
+stockanalyser = "stockanalyser.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+stockanalyser = ["data/samples/*.json"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,0 +1,62 @@
+{
+  "_provenance": "ILLUSTRATIVE SNAPSHOT — approximate figures for demonstration only. Replace with a live provider before any real decision.",
+  "company": {
+    "symbol": "POWERINDIA",
+    "name": "Hitachi Energy India Ltd",
+    "exchange": "NSE",
+    "sector": "Industrials",
+    "industry": "Heavy Electrical Equipment / Power Grid",
+    "currency": "INR",
+    "market_cap": 46600,
+    "aliases": ["hitachi energy", "hitachi energy india", "abb power products", "abb power india"],
+    "description": "Power grid technology and service provider (transformers, HVDC, grid automation) — the India arm of Hitachi Energy, riding the energy-transition and grid-capex cycle."
+  },
+  "price_seed": {
+    "start_price": 6800,
+    "annual_drift": 0.42,
+    "annual_vol": 0.20,
+    "days": 500,
+    "beta": 1.15,
+    "events": [
+      {"days_ago": 62, "kind": "earnings_beat", "magnitude_pct": 9.0, "cause": "Q4 results: order backlog at record, margins beat"},
+      {"days_ago": 121, "kind": "order_win", "magnitude_pct": 7.5, "cause": "Large HVDC order win announced"},
+      {"days_ago": 205, "kind": "sector", "magnitude_pct": 7.0, "cause": "Sector-wide capex rerating (not stock specific)"},
+      {"days_ago": 33, "kind": "block_deal", "magnitude_pct": -7.5, "cause": "Block deal / profit booking by an institution"}
+    ]
+  },
+  "fundamentals": {
+    "price": 11000,
+    "shares_outstanding": 4.238,
+    "statements": [
+      {"period": "FY2020", "revenue": 3550, "ebitda": 178, "depreciation": 55, "ebit": 123, "interest": 25, "pbt": 98, "tax": 30, "net_income": 68, "total_assets": 4200, "current_assets": 3200, "inventory": 620, "receivables": 1500, "cash": 180, "current_liabilities": 2600, "total_debt": 250, "equity": 1150, "payables": 1400, "cfo": 120, "capex": 60, "shares_outstanding": 4.238, "dividend_per_share": 3.0},
+      {"period": "FY2021", "revenue": 3820, "ebitda": 210, "depreciation": 58, "ebit": 152, "interest": 22, "pbt": 130, "tax": 40, "net_income": 90, "total_assets": 4500, "current_assets": 3450, "inventory": 660, "receivables": 1600, "cash": 210, "current_liabilities": 2750, "total_debt": 220, "equity": 1230, "payables": 1500, "cfo": 160, "capex": 70, "shares_outstanding": 4.238, "dividend_per_share": 3.5},
+      {"period": "FY2022", "revenue": 4180, "ebitda": 250, "depreciation": 60, "ebit": 190, "interest": 20, "pbt": 170, "tax": 52, "net_income": 118, "total_assets": 4900, "current_assets": 3800, "inventory": 720, "receivables": 1750, "cash": 260, "current_liabilities": 3000, "total_debt": 180, "equity": 1330, "payables": 1650, "cfo": 210, "capex": 85, "shares_outstanding": 4.238, "dividend_per_share": 4.0},
+      {"period": "FY2023", "revenue": 4620, "ebitda": 305, "depreciation": 63, "ebit": 242, "interest": 18, "pbt": 224, "tax": 70, "net_income": 154, "total_assets": 5400, "current_assets": 4200, "inventory": 800, "receivables": 1950, "cash": 300, "current_liabilities": 3300, "total_debt": 150, "equity": 1460, "payables": 1800, "cfo": 260, "capex": 95, "shares_outstanding": 4.238, "dividend_per_share": 4.5},
+      {"period": "FY2024", "revenue": 5022, "ebitda": 402, "depreciation": 68, "ebit": 334, "interest": 16, "pbt": 318, "tax": 100, "net_income": 218, "total_assets": 6000, "current_assets": 4700, "inventory": 900, "receivables": 2150, "cash": 360, "current_liabilities": 3650, "total_debt": 120, "equity": 1620, "payables": 2000, "cfo": 300, "capex": 110, "shares_outstanding": 4.238, "dividend_per_share": 5.0}
+    ]
+  },
+  "ownership": {
+    "history": [
+      {"period": "Q1FY24", "promoter": 75.0, "promoter_pledged": 0.0, "fii": 6.8, "dii": 5.9, "public": 12.3},
+      {"period": "Q2FY24", "promoter": 75.0, "promoter_pledged": 0.0, "fii": 7.2, "dii": 6.1, "public": 11.7},
+      {"period": "Q3FY24", "promoter": 75.0, "promoter_pledged": 0.0, "fii": 7.9, "dii": 6.0, "public": 11.1},
+      {"period": "Q4FY24", "promoter": 75.0, "promoter_pledged": 0.0, "fii": 8.4, "dii": 6.3, "public": 10.3}
+    ],
+    "bulk_block_deals": [
+      {"days_ago": 33, "party": "Institutional seller", "action": "SELL", "qty_pct": 0.4}
+    ]
+  },
+  "news": [
+    {"days_ago": 62, "headline": "Hitachi Energy India Q4 profit jumps, order backlog at record high", "summary": "PAT beats estimates; management flags strongest-ever order pipeline on grid capex and energy transition.", "source": "illustrative"},
+    {"days_ago": 121, "headline": "Company bags large HVDC transmission order", "summary": "Multi-year HVDC order strengthens medium-term revenue visibility.", "source": "illustrative"},
+    {"days_ago": 33, "headline": "Shares slip as institution trims stake via block deal", "summary": "Profit-booking after a sharp run; no change in fundamentals reported.", "source": "illustrative"}
+  ],
+  "corporate_actions": [
+    {"days_ago": 62, "kind": "results", "detail": "Q4FY24 results declared"},
+    {"days_ago": 40, "kind": "dividend", "detail": "Final dividend of Rs 5.0 per share"}
+  ],
+  "earnings_calls": [
+    {"period": "Q4FY24", "days_ago": 60, "transcript": "Management: We are pleased to report our strongest-ever order backlog, driven by the energy transition, grid modernisation and rising renewables integration. Demand across HVDC, transformers and grid automation remains robust and we expect this momentum to continue into the coming year. Margins improved on better project execution and easing supply-chain pressures, and we are confident of sustaining double-digit growth. We remain focused on localisation and capacity expansion. On the analyst question regarding competition, we believe our technology leadership and installed base give us a durable advantage. We are cautiously optimistic on pricing discipline in the industry."}
+  ],
+  "peers": ["SIEMENS", "ABB", "CGPOWER"]
+}

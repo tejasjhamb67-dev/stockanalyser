@@ -1,0 +1,52 @@
+{
+  "_provenance": "ILLUSTRATIVE SNAPSHOT — approximate figures for demonstration only. Replace with a live provider before any real decision.",
+  "company": {
+    "symbol": "RELIANCE",
+    "name": "Reliance Industries Ltd",
+    "exchange": "NSE",
+    "sector": "Energy / Conglomerate",
+    "industry": "Oil-to-Chemicals, Telecom, Retail",
+    "currency": "INR",
+    "market_cap": 1980000,
+    "aliases": ["reliance", "reliance industries", "ril", "jio"],
+    "description": "Diversified conglomerate spanning oil-to-chemicals, telecom (Jio) and retail — a bottom-up compounder inside a top-down energy/consumption theme."
+  },
+  "price_seed": {
+    "start_price": 2350,
+    "annual_drift": 0.10,
+    "annual_vol": 0.22,
+    "days": 500,
+    "beta": 1.05,
+    "events": [
+      {"days_ago": 70, "kind": "earnings_beat", "magnitude_pct": 4.5, "cause": "Quarterly results with strong retail and Jio ARPU"},
+      {"days_ago": 190, "kind": "sector", "magnitude_pct": 3.6, "cause": "Broad market rally"}
+    ]
+  },
+  "fundamentals": {
+    "price": 2930,
+    "shares_outstanding": 676.0,
+    "statements": [
+      {"period": "FY2021", "revenue": 486300, "ebitda": 82000, "depreciation": 26500, "ebit": 55500, "interest": 21000, "pbt": 34500, "tax": 5000, "net_income": 49100, "total_assets": 1320000, "current_assets": 350000, "inventory": 90000, "receivables": 20000, "cash": 250000, "current_liabilities": 300000, "total_debt": 250000, "equity": 700000, "payables": 180000, "cfo": 25000, "capex": 79000, "shares_outstanding": 634.0, "dividend_per_share": 7.0},
+      {"period": "FY2022", "revenue": 721600, "ebitda": 106000, "depreciation": 29800, "ebit": 76200, "interest": 15000, "pbt": 61200, "tax": 12000, "net_income": 60700, "total_assets": 1480000, "current_assets": 400000, "inventory": 120000, "receivables": 24000, "cash": 240000, "current_liabilities": 340000, "total_debt": 260000, "equity": 780000, "payables": 210000, "cfo": 110000, "capex": 105000, "shares_outstanding": 676.0, "dividend_per_share": 8.0},
+      {"period": "FY2023", "revenue": 876400, "ebitda": 125000, "depreciation": 40200, "ebit": 84800, "interest": 19600, "pbt": 65200, "tax": 15600, "net_income": 66700, "total_assets": 1620000, "current_assets": 430000, "inventory": 135000, "receivables": 27000, "cash": 220000, "current_liabilities": 380000, "total_debt": 300000, "equity": 830000, "payables": 235000, "cfo": 115000, "capex": 118000, "shares_outstanding": 676.0, "dividend_per_share": 9.0},
+      {"period": "FY2024", "revenue": 917000, "ebitda": 154000, "depreciation": 50100, "ebit": 103900, "interest": 23000, "pbt": 80900, "tax": 11000, "net_income": 79000, "total_assets": 1770000, "current_assets": 460000, "inventory": 145000, "receivables": 30000, "cash": 210000, "current_liabilities": 410000, "total_debt": 330000, "equity": 900000, "payables": 255000, "cfo": 160000, "capex": 130000, "shares_outstanding": 676.0, "dividend_per_share": 10.0}
+    ]
+  },
+  "ownership": {
+    "history": [
+      {"period": "Q1FY24", "promoter": 50.3, "promoter_pledged": 0.0, "fii": 22.5, "dii": 15.8, "public": 11.4},
+      {"period": "Q4FY24", "promoter": 50.3, "promoter_pledged": 0.0, "fii": 22.1, "dii": 16.3, "public": 11.3}
+    ],
+    "bulk_block_deals": []
+  },
+  "news": [
+    {"days_ago": 70, "headline": "Reliance quarterly profit rises on retail and Jio strength", "summary": "Consumer businesses drive earnings; O2C steady.", "source": "illustrative"}
+  ],
+  "corporate_actions": [
+    {"days_ago": 70, "kind": "results", "detail": "Quarterly results declared"}
+  ],
+  "earnings_calls": [
+    {"period": "Q4FY24", "days_ago": 68, "transcript": "Management: Consumer businesses continue to scale well with healthy footfall in retail and steady ARPU improvement in digital services. The O2C segment remained resilient despite margin volatility. We are investing heavily in new energy and expect it to be a meaningful growth engine over the medium term. Net debt remains under control relative to EBITDA and we are comfortable with our balance sheet. We remain focused on disciplined capital allocation and value creation for shareholders."}
+  ],
+  "peers": ["ONGC", "BPCL", "IOC"]
+}

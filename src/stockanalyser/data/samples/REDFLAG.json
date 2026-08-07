@@ -1,0 +1,57 @@
+{
+  "_provenance": "SYNTHETIC TEACHING FIXTURE — this is a FICTIONAL company invented to demonstrate the forensic / governance lenses catching manipulation and distress. Not a real security.",
+  "company": {
+    "symbol": "REDFLAG",
+    "name": "Redflag Infra & Holdings Ltd (fictional)",
+    "exchange": "NSE",
+    "sector": "Industrials",
+    "industry": "Infrastructure / EPC",
+    "currency": "INR",
+    "market_cap": 3200,
+    "aliases": ["redflag", "redflag infra"],
+    "description": "FICTIONAL fixture: profits that aren't backed by cash, ballooning receivables, rising debt and a promoter pledging stock — the classic value-trap signature."
+  },
+  "price_seed": {
+    "start_price": 240,
+    "annual_drift": -0.28,
+    "annual_vol": 0.55,
+    "days": 500,
+    "beta": 1.4,
+    "events": [
+      {"days_ago": 45, "kind": "earnings_beat", "magnitude_pct": 9.0, "cause": "Reported 'profit' spike (accrual-driven, not cash)"},
+      {"days_ago": 15, "kind": "block_deal", "magnitude_pct": -12.0, "cause": "Promoter pledge invocation / distress selling"}
+    ]
+  },
+  "fundamentals": {
+    "price": 150,
+    "shares_outstanding": 21.3,
+    "statements": [
+      {"period": "FY2021", "revenue": 2100, "ebitda": 210, "depreciation": 70, "ebit": 140, "interest": 120, "pbt": 20, "tax": 4, "net_income": 16, "total_assets": 4200, "current_assets": 2600, "inventory": 700, "receivables": 1200, "cash": 60, "current_liabilities": 1800, "total_debt": 2200, "equity": 900, "payables": 900, "cfo": 40, "capex": 180, "shares_outstanding": 21.3, "dividend_per_share": 0.0},
+      {"period": "FY2022", "revenue": 2380, "ebitda": 250, "depreciation": 75, "ebit": 175, "interest": 150, "pbt": 25, "tax": 5, "net_income": 20, "total_assets": 4700, "current_assets": 3000, "inventory": 820, "receivables": 1600, "cash": 45, "current_liabilities": 2000, "total_debt": 2600, "equity": 910, "payables": 1050, "cfo": 10, "capex": 200, "shares_outstanding": 21.3, "dividend_per_share": 0.0},
+      {"period": "FY2023", "revenue": 2760, "ebitda": 300, "depreciation": 82, "ebit": 218, "interest": 190, "pbt": 28, "tax": 6, "net_income": 22, "total_assets": 5400, "current_assets": 3600, "inventory": 980, "receivables": 2200, "cash": 30, "current_liabilities": 2300, "total_debt": 3100, "equity": 920, "payables": 1250, "cfo": -30, "capex": 210, "shares_outstanding": 21.3, "dividend_per_share": 0.0},
+      {"period": "FY2024", "revenue": 3250, "ebitda": 360, "depreciation": 90, "ebit": 270, "interest": 240, "pbt": 30, "tax": 6, "net_income": 24, "total_assets": 6300, "current_assets": 4400, "inventory": 1200, "receivables": 3100, "cash": 20, "current_liabilities": 2700, "total_debt": 3800, "equity": 930, "payables": 1500, "cfo": -80, "capex": 240, "shares_outstanding": 21.3, "dividend_per_share": 0.0}
+    ]
+  },
+  "ownership": {
+    "history": [
+      {"period": "Q1FY24", "promoter": 58.0, "promoter_pledged": 22.0, "fii": 4.0, "dii": 3.0, "public": 35.0},
+      {"period": "Q2FY24", "promoter": 58.0, "promoter_pledged": 34.0, "fii": 3.2, "dii": 2.6, "public": 36.2},
+      {"period": "Q3FY24", "promoter": 57.0, "promoter_pledged": 48.0, "fii": 2.5, "dii": 2.1, "public": 38.4},
+      {"period": "Q4FY24", "promoter": 55.0, "promoter_pledged": 61.0, "fii": 1.9, "dii": 1.6, "public": 41.5}
+    ],
+    "bulk_block_deals": [
+      {"days_ago": 15, "party": "Lender (pledge invocation)", "action": "SELL", "qty_pct": 2.0}
+    ]
+  },
+  "news": [
+    {"days_ago": 45, "headline": "Redflag Infra reports higher profit on order execution", "summary": "Headline profit up; receivables and debt also climb.", "source": "illustrative"},
+    {"days_ago": 15, "headline": "Redflag Infra slides as lender invokes promoter pledge", "summary": "Distress selling after pledged shares invoked.", "source": "illustrative"}
+  ],
+  "corporate_actions": [
+    {"days_ago": 45, "kind": "results", "detail": "Quarterly results declared"}
+  ],
+  "earnings_calls": [
+    {"period": "Q4FY24", "days_ago": 43, "transcript": "Management: The environment remains challenging and working capital continues to be stretched due to delayed client payments. We are confident of a strong second half and expect collections to improve materially. We are in discussions with lenders to refinance near-term maturities and remain optimistic about resolving the situation. We reiterate our aggressive growth guidance despite the temporary headwinds."}
+  ],
+  "peers": ["POWERINDIA", "SIEMENS"]
+}
