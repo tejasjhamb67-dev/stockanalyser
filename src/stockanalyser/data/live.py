@@ -68,6 +68,31 @@ class YFinanceProvider(DataProvider):
         frame.index = pd.to_datetime(frame.index).tz_localize(None)
         return PriceHistory(symbol=company.symbol, frame=frame, source=self.name)
 
+    def news(self, company: Company):
+        """Headlines via yfinance, falling back to Google News RSS."""
+        from datetime import datetime
+        from ..models import NewsItem
+        yf = self._yf()
+        out = []
+        try:
+            raw = yf.Ticker(self._yf_symbol(company)).news or []
+            for n in raw[:25]:
+                content = n.get("content", n)
+                title = content.get("title") or n.get("title")
+                if not title:
+                    continue
+                ts = n.get("providerPublishTime")
+                when = datetime.fromtimestamp(ts).date() if ts else datetime.utcnow().date()
+                out.append(NewsItem(date=when, headline=title,
+                                    source=(content.get("provider", {}) or {}).get("displayName", "yfinance"),
+                                    url=content.get("canonicalUrl", {}).get("url", "") if isinstance(content.get("canonicalUrl"), dict) else ""))
+        except Exception:
+            pass
+        if not out:
+            from .news import fetch_news
+            out = fetch_news(company)
+        return out
+
     def benchmarks(self, company: Company) -> dict[str, PriceHistory]:
         yf = self._yf()
         out: dict[str, PriceHistory] = {}

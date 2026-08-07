@@ -14,6 +14,7 @@ provenance string and the source is reported as "offline-sample".
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import date, timedelta
 from pathlib import Path
@@ -109,7 +110,9 @@ class OfflineProvider(DataProvider):
             return self._sim_cache[sym]
 
         cfg = self._seed_cfg(company)
-        seed = abs(hash(sym)) % (2**32)
+        # stable, process-independent seed — Python's hash() is salted per run,
+        # which would make the simulated series (and thus scores) non-reproducible.
+        seed = int.from_bytes(hashlib.sha256(sym.encode()).digest()[:4], "big")
         rng = np.random.default_rng(seed)
 
         n = int(cfg.get("days", 400))

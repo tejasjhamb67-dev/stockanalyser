@@ -19,13 +19,12 @@ _VERDICT_CLASS = {
 _STANCE_CLASS = {"bullish": "s-bull", "bearish": "s-bear", "warning": "s-warn", "neutral": "s-neu"}
 
 
-def render(report: Report) -> str:
-    c = report.company
+def sections_html(report: Report) -> str:
+    """Just the dashboard body sections — reused by the CLI file and the web app."""
     tech = report.lenses.get("Technical")
     price = (tech.data.get("last_price") if tech else None) or "—"
     chg = (tech.data.get("change_1d_pct") if tech else None)
-
-    body = [
+    return "\n".join([
         _header(report, price, chg),
         _warnings(report),
         _scorecard(report),
@@ -36,10 +35,18 @@ def render(report: Report) -> str:
         _ownership(report),
         _qualitative(report),
         _footer(report),
-    ]
-    return _PAGE.replace("{{TITLE}}", escape(f"{c.name} — Stock Analysis")) \
-               .replace("{{STYLE}}", _CSS) \
-               .replace("{{BODY}}", "\n".join(body))
+    ])
+
+
+def render(report: Report, nav_html: str = "", extra_css: str = "") -> str:
+    """Full standalone HTML document. `nav_html` is injected at the top of the
+    page (the web app passes a search bar); `extra_css` appends styles."""
+    c = report.company
+    return (_PAGE
+            .replace("{{TITLE}}", escape(f"{c.name} — Stock Analysis"))
+            .replace("{{STYLE}}", _CSS + extra_css)
+            .replace("{{NAV}}", nav_html)
+            .replace("{{BODY}}", sections_html(report)))
 
 
 # ── sections ────────────────────────────────────────────────────────────────
@@ -296,6 +303,7 @@ _PAGE = """<!doctype html>
 <style>{{STYLE}}</style>
 </head>
 <body>
+{{NAV}}
 <main class="wrap">
 {{BODY}}
 </main>

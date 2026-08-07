@@ -85,4 +85,13 @@ def resolve_and_fetch(query: str, config: Config) -> Optional[tuple[Company, Com
             if not data.benchmarks:
                 data.benchmarks = off.benchmarks
 
+        # For a real live company with no snapshot news, pull live headlines so
+        # spike attribution has something to correlate against.
+        if not data.news:
+            try:
+                from .news import fetch_news
+                data.news = fetch_news(company)
+            except Exception:
+                pass
+
     return company, data, provider.name

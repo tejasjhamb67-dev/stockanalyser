@@ -1,0 +1,187 @@
+"""HTML for the website chrome: the landing page and the search nav bar that
+wraps every result. Reuses the dashboard's CSS tokens so the whole site is one
+visual system, light/dark aware."""
+from __future__ import annotations
+
+from html import escape
+
+from ..models import Company
+from ..report.dashboard import _CSS
+
+BRAND = "stockanalyser"
+
+
+def nav_bar(query: str = "") -> str:
+    """Sticky top search bar shown on result pages."""
+    return f"""
+<nav class="topnav">
+  <a href="/" class="brand">◧ {BRAND}</a>
+  <form class="navsearch" action="/analyse" method="get" role="search">
+    <input name="q" value="{escape(query)}" placeholder="Search a company…"
+           autocomplete="off" list="samples" aria-label="Company">
+    <button type="submit">Analyse</button>
+  </form>
+  <a href="/framework" class="navlink">Framework</a>
+</nav>
+{_datalist()}"""
+
+
+def _datalist(samples: list[Company] | None = None) -> str:
+    opts = ""
+    if samples:
+        for c in samples:
+            opts += f"<option value='{escape(c.name)}'>{escape(c.symbol)}</option>"
+    return f"<datalist id='samples'>{opts}</datalist>"
+
+
+def landing_page(samples: list[Company]) -> str:
+    chips = "".join(
+        f"<a class='samplechip' href='/analyse?q={escape(c.symbol)}'>"
+        f"<b>{escape(c.symbol)}</b><span>{escape(c.name)}</span></a>"
+        for c in samples
+    )
+    lenses = [
+        ("Technical", "What is price doing?", "SMA/EMA · RSI · MACD · Bollinger · candlesticks"),
+        ("Spike attribution", "Why did it move?", "abnormal-move detection → market/sector/alpha → ranked cause + confidence"),
+        ("Fundamental", "Is the business good?", "margins · ROE/ROCE · leverage · DuPont · CAGR"),
+        ("Quality / forensic", "Are the numbers real?", "Piotroski F · Altman Z · Beneish M · cash-vs-profit"),
+        ("Valuation", "Is it cheap?", "P/E · P/B · EV/EBITDA · two-stage DCF"),
+        ("Earnings call", "What is management saying?", "tone · themes · guidance · red-flag phrases · drift"),
+        ("Governance", "Can you trust them?", "pledging · capital allocation · earnings honesty"),
+        ("Sector / top-down", "Is the tide rising?", "relative strength vs index & sector · peers"),
+        ("Ownership & flows", "Who's buying?", "promoter/FII/DII trend · bulk/block deals"),
+    ]
+    lens_cards = "".join(
+        f"<div class='lp-lens'><h3>{escape(t)}</h3>"
+        f"<div class='lp-q'>{escape(q)}</div><p>{escape(d)}</p></div>"
+        for t, q, d in lenses
+    )
+    return _WRAP.format(
+        title=f"{BRAND} — multi-lens equity analysis",
+        css=_CSS + _SITE_CSS,
+        nav="",
+        body=f"""
+<main class="landing">
+  <section class="lp-hero">
+    <div class="lp-kicker">TECHNICAL · FUNDAMENTAL · FORENSIC · QUALITATIVE</div>
+    <h1>Type a company.<br>Get the whole picture.</h1>
+    <p class="lp-lede">A multi-lens equity analysis engine that resolves a name to a ticker,
+      pulls the data, and answers the question most tools skip —
+      <b>why did the stock move?</b> — then scores nine lenses into one verdict.</p>
+    <form class="lp-search" action="/analyse" method="get" role="search">
+      <input name="q" placeholder="e.g. Hitachi Energy, Reliance, POWERINDIA…"
+             autocomplete="off" list="samples" autofocus aria-label="Company">
+      <button type="submit">Analyse →</button>
+    </form>
+    <div class="lp-samples">{chips}</div>
+    <div class="lp-note">Offline demo data is illustrative — connect a live provider for real figures.</div>
+  </section>
+
+  <section class="lp-lenses">
+    <h2>Nine lenses, one scorecard</h2>
+    <div class="lp-lensgrid">{lens_cards}</div>
+  </section>
+
+  <section class="lp-cta">
+    <a class="lp-btn" href="/analyse?q=POWERINDIA">See a live example →</a>
+    <a class="lp-link" href="/framework">Read the framework</a>
+    <a class="lp-link" href="/docs">API</a>
+  </section>
+  <footer class="lp-foot">Decision-support tool, not investment advice. · {BRAND}</footer>
+</main>
+{_datalist(samples)}""",
+    )
+
+
+def framework_page(markdown_html: str, samples: list[Company]) -> str:
+    return _WRAP.format(
+        title=f"Framework — {BRAND}",
+        css=_CSS + _SITE_CSS,
+        nav=nav_bar(),
+        body=f"<main class='wrap prose'>{markdown_html}</main>",
+    )
+
+
+def error_page(query: str, message: str, samples: list[Company]) -> str:
+    return _WRAP.format(
+        title=f"Not found — {BRAND}",
+        css=_CSS + _SITE_CSS,
+        nav=nav_bar(query),
+        body=f"""
+<main class="wrap">
+  <section class="card errcard">
+    <h2>Couldn't analyse “{escape(query)}”</h2>
+    <p class="muted">{escape(message)}</p>
+    <p>Try a ticker like <a href="/analyse?q=POWERINDIA">POWERINDIA</a>,
+       <a href="/analyse?q=RELIANCE">RELIANCE</a>, or a known name.</p>
+  </section>
+</main>
+{_datalist(samples)}""",
+    )
+
+
+_WRAP = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>{css}</style>
+</head>
+<body>
+{nav}
+{body}
+</body>
+</html>"""
+
+
+_SITE_CSS = """
+/* top nav */
+.topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;
+  padding:10px 20px;background:color-mix(in srgb,var(--panel) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:-.02em;text-decoration:none;color:var(--ink);white-space:nowrap}
+.navsearch{flex:1;display:flex;gap:8px;max-width:560px;margin:0 auto}
+.navsearch input{flex:1;padding:8px 12px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font-size:14px}
+.navsearch button,.lp-search button{border:0;background:var(--accent);color:#fff;font-weight:600;
+  padding:8px 16px;border-radius:10px;cursor:pointer;font-size:14px}
+.navlink{color:var(--muted);text-decoration:none;font-size:14px;white-space:nowrap}
+.navlink:hover{color:var(--ink)}
+/* landing */
+.landing{max-width:1000px;margin:0 auto;padding:20px}
+.lp-hero{text-align:center;padding:64px 16px 40px}
+.lp-kicker{font-size:12px;letter-spacing:.18em;color:var(--muted);font-weight:600}
+.lp-hero h1{font-size:clamp(34px,6vw,58px);line-height:1.05;letter-spacing:-.03em;margin:18px 0}
+.lp-lede{color:var(--muted);font-size:18px;max-width:60ch;margin:0 auto 28px}
+.lp-lede b{color:var(--ink)}
+.lp-search{display:flex;gap:10px;max-width:560px;margin:0 auto;flex-wrap:wrap}
+.lp-search input{flex:1;min-width:240px;padding:14px 16px;border-radius:12px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);font-size:16px;box-shadow:var(--shadow)}
+.lp-search button{padding:14px 22px;border-radius:12px;font-size:16px}
+.lp-samples{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:22px auto 0;max-width:640px}
+.samplechip{display:flex;flex-direction:column;text-decoration:none;padding:8px 14px;border-radius:12px;
+  border:1px solid var(--line);background:var(--panel);min-width:120px}
+.samplechip b{color:var(--accent);font-size:13px} .samplechip span{color:var(--muted);font-size:11px}
+.lp-note{color:var(--muted);font-size:12px;margin-top:20px}
+.lp-lenses{padding:20px 0 10px} .lp-lenses h2{text-align:center;font-size:22px;margin-bottom:22px}
+.lp-lensgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.lp-lens{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.lp-lens h3{font-size:15px;margin-bottom:4px} .lp-q{color:var(--accent);font-size:13px;font-weight:600}
+.lp-lens p{color:var(--muted);font-size:12.5px;margin:6px 0 0}
+.lp-cta{display:flex;gap:16px;align-items:center;justify-content:center;padding:40px 0 10px;flex-wrap:wrap}
+.lp-btn{background:var(--accent);color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:12px}
+.lp-link{color:var(--muted);text-decoration:none} .lp-link:hover{color:var(--ink)}
+.lp-foot{text-align:center;color:var(--muted);font-size:12px;padding:40px 0 20px;font-style:italic}
+/* prose (framework page) */
+.prose{max-width:820px}
+.prose h1{font-size:30px;margin-top:0} .prose h2{font-size:20px;margin-top:28px}
+.prose h3{font-size:16px;margin-top:20px}
+.prose table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+.prose th,.prose td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+.prose code{background:color-mix(in srgb,var(--ink) 6%,transparent);padding:1px 5px;border-radius:5px;font-size:.9em}
+.prose pre{background:color-mix(in srgb,var(--ink) 5%,transparent);padding:14px;border-radius:10px;overflow-x:auto}
+.prose blockquote{border-left:3px solid var(--accent);margin:14px 0;padding:2px 16px;color:var(--muted)}
+.prose a{color:var(--accent)}
+.errcard a{color:var(--accent)}
+"""

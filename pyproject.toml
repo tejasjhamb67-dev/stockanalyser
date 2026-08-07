@@ -25,12 +25,19 @@ live = [
 llm = [
     "anthropic>=0.40",
 ]
+# The publishable website / JSON API.
+web = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
 dev = [
     "pytest>=7.4",
+    "httpx>=0.27",
 ]
 
 [project.scripts]
 stockanalyser = "stockanalyser.cli:main"
+stockanalyser-web = "stockanalyser.web.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

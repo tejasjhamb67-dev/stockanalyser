@@ -34,7 +34,20 @@ python -m stockanalyser analyse RELIANCE --provider offline --json reliance.json
 python -m stockanalyser list
 ```
 
-Or from Python:
+### Web app / site
+
+```bash
+pip install -e ".[web]"
+python -m stockanalyser.web          # → http://localhost:8000  (search box + dashboards)
+```
+
+A FastAPI site: landing page with search, live-rendered dashboards at `/analyse?q=…`, the
+framework at `/framework`, a JSON API at `/api/analyse`, autocomplete at `/api/suggest`,
+and interactive API docs at `/docs`. Containerised (`Dockerfile`) with one-click
+`render.yaml` — see [`docs/DEPLOY.md`](docs/DEPLOY.md). Runs on bundled data with no keys;
+set `ALPHAVANTAGE_API_KEY` / `ANTHROPIC_API_KEY` to go live.
+
+### From Python:
 
 ```python
 from stockanalyser import analyse
