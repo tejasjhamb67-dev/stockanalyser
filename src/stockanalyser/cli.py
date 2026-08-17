@@ -91,7 +91,8 @@ def cmd_research(args):
     cfg.use_llm = not args.no_llm
     try:
         out = research(args.query, side=args.side, depth=args.depth,
-                       market=args.market, config=cfg)
+                       market=args.market, config=cfg,
+                       coverage_store=args.coverage_store)
     except _NF as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -152,6 +153,8 @@ def main(argv=None):
                    help="L0..L5 or a name (snapshot/screen/brief/deep-dive/initiation/coverage)")
     r.add_argument("--market", default=None,
                    help="market key: US, IN, GB, EU, JP, HK, CN, AU, SG (inferred if omitted)")
+    r.add_argument("--coverage-store", default=None, metavar="DIR",
+                   help="directory for coverage memory (L4+); default ~/.stockanalyser/coverage")
     r.add_argument("--provider", default="auto",
                    choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
     r.add_argument("--json", metavar="FILE", help="write a machine-readable summary here")

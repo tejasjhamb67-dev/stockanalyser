@@ -20,7 +20,10 @@ from ..models import Company, LensResult, Verdict
 from ..report.builder import CompanyNotFound
 from . import markets, products
 from .appraisal import Appraisal, build_appraisal
+from .catalysts import Catalyst, build_catalysts
+from .consensus import ConsensusView, build_consensus
 from .mandate import Depth, Mandate, MandateRouter, Side
+from .memory import CoverageEntry, CoverageMemory, coverage_note, now_date
 from .planner import ResearchPlan, plan_research
 from .products import Call
 from .tools import run_tools
@@ -38,6 +41,9 @@ class ResearchOutput:
     verdict: Verdict
     call: Call
     appraisal: Appraisal | None = None
+    consensus: ConsensusView | None = None
+    catalysts: list[Catalyst] = field(default_factory=list)
+    coverage_note: str = ""
     bull_thesis: list[str] = field(default_factory=list)
     bear_thesis: list[str] = field(default_factory=list)
     monitorables: list[str] = field(default_factory=list)
@@ -58,6 +64,8 @@ def research(
     depth: Depth | int | str | None = None,
     market: str | None = None,
     config: Config | None = None,
+    coverage_store: str | None = None,
+    record_coverage: bool = True,
 ) -> ResearchOutput:
     """Run the equity-research agent over one name and return a mandate-framed output."""
     config = config or Config.default()
@@ -90,22 +98,41 @@ def research(
     # L3+: build the driver model + triangulated valuation first, so the call can be
     # reconciled with the price target (a rating must be consistent with fair value)
     appraisal = None
-    if plan.product == "deepdive":
+    if plan.product in ("deepdive", "initiation"):
         appraisal = build_appraisal(data.fundamentals, mandate.market, config)
 
     call = products.decide_call(mandate.side, verdict, lenses, appraisal)
 
-    rendered = products.render_product(
-        mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
-        composite=composite, verdict=verdict, bull=bull, bear=bear, monitor=monitor,
-        call=call, product=plan.product, plan_notes=plan.notes, warnings=warnings,
-        appraisal=appraisal,
-    )
+    # L4: estimates/consensus, catalyst calendar, and coverage memory (track the call)
+    consensus = catalysts = None
+    note = ""
+    if plan.product == "initiation":
+        consensus = build_consensus(appraisal, data.fundamentals)
+        catalysts = build_catalysts(data)
+        note = _update_coverage(
+            company, mandate, call, appraisal, composite, verdict, monitor,
+            coverage_store, record_coverage)
+
+    if plan.product == "initiation":
+        rendered = products.render_initiation(
+            mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
+            composite=composite, verdict=verdict, call=call, bull=bull, bear=bear,
+            monitor=monitor, appraisal=appraisal, consensus=consensus,
+            catalysts=catalysts, coverage_note=note, plan_notes=plan.notes,
+            warnings=warnings)
+    else:
+        rendered = products.render_product(
+            mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
+            composite=composite, verdict=verdict, bull=bull, bear=bear, monitor=monitor,
+            call=call, product=plan.product, plan_notes=plan.notes, warnings=warnings,
+            appraisal=appraisal,
+        )
 
     return ResearchOutput(
         mandate=mandate, company=company, generated_at=generated_at, plan=plan,
         lenses=lenses, composite_score=composite, verdict=verdict, call=call,
-        appraisal=appraisal,
+        appraisal=appraisal, consensus=consensus, catalysts=catalysts or [],
+        coverage_note=note,
         bull_thesis=bull, bear_thesis=bear, monitorables=monitor, product=rendered,
         data_sources={
             "prices": data.prices.source if data.prices else "n/a",
@@ -114,6 +141,31 @@ def research(
         },
         warnings=warnings,
     )
+
+
+def _update_coverage(company, mandate, call, appraisal, composite, verdict, monitor,
+                     store, record: bool) -> str:
+    """Diff this call against the last one on record, then persist it. Fully defensive —
+    coverage tracking must never break the research path."""
+    try:
+        mem = CoverageMemory(store)
+        prev = mem.load(company.symbol)
+        entry = CoverageEntry(
+            symbol=company.symbol, name=company.name, date=now_date(),
+            side=mandate.side.value, market=mandate.market.key,
+            rating=call.headline, conviction=call.conviction,
+            target=appraisal.weighted_target if appraisal else None,
+            upside_pct=appraisal.target_upside_pct if appraisal else None,
+            composite=composite, verdict=verdict.value,
+            base_growth=appraisal.base_growth if appraisal else None,
+            gate=call.gate, monitorables=list(monitor[:4]))
+        note = coverage_note(prev, entry)
+        if record:
+            if not mem.record(entry):
+                note += " (coverage store not writable — not persisted)"
+        return note
+    except Exception as exc:  # never sink research over memory bookkeeping
+        return f"Coverage memory unavailable ({type(exc).__name__})."
 
 
 def _now() -> str:

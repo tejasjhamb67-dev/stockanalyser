@@ -63,6 +63,7 @@ class Appraisal:
     implied_growth: float | None              # reverse-DCF: growth the price implies
     exit_multiple_value: float | None         # cross-check per-share value
     notes: list[str] = field(default_factory=list)
+    base_projection: Projection | None = None  # the base-case forecast (for estimates)
 
     @property
     def variant(self) -> str | None:
@@ -234,4 +235,4 @@ def build_appraisal(
         fair_low=round(min(fvs), 1) if fvs else None,
         fair_high=round(max(fvs), 1) if fvs else None,
         base_growth=base.g0, implied_growth=implied,
-        exit_multiple_value=exit_val, notes=notes)
+        exit_multiple_value=exit_val, notes=notes, base_projection=base_proj)

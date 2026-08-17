@@ -85,11 +85,11 @@ def test_brief_runs_all_nine():
     assert len(plan.lenses) == 9
 
 
-def test_deeper_tiers_degrade_with_note():
-    # L4/L5 now degrade to the L3 deep dive (not the L2 tearsheet), with a note
+def test_l4_is_a_first_class_initiation_product():
+    # L4 is now its own product (not a degrade); only L5 degrades, to L4
     plan = plan_research(MandateRouter().route("x", depth="L4"))
-    assert plan.product == "deepdive"
-    assert plan.notes and "later build phase" in plan.notes[0]
+    assert plan.product == "initiation"
+    assert not plan.notes
 
 
 # ── forensic gate + side calls ───────────────────────────────────────────────

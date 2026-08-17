@@ -48,6 +48,9 @@ python -m stockanalyser research "Hitachi Energy" --side sell-side --depth L2
 # an L3 deep dive: driver model + triangulated DCF + scenario-weighted target
 python -m stockanalyser research "RELIANCE" --side sell-side --depth L3
 
+# an L4 initiation: full report + estimates + catalysts + coverage memory
+python -m stockanalyser research "RELIANCE" --side sell-side --depth L4
+
 # the same name as a buy-side snapshot — different call, different framing
 python -m stockanalyser research "Hitachi Energy" --side buy-side --depth L0
 
@@ -61,6 +64,13 @@ with capex normalising toward maintenance in the terminal year), values it three
 that reads the growth the price already implies (the variant-perception view) — across
 **bull / base / bear**, and reconciles the rating to the resulting price target (a strong
 business at an indefensible price is capped to Sell/Avoid, and vice-versa).
+
+At **L4** it assembles a full **initiation report** — industry primer, thesis, forward
+**estimates** with a variant-vs-market read (price-implied until a live consensus provider
+is connected), the triangulated valuation, risks, and a **catalyst calendar** — and writes
+to **coverage memory**: the first run initiates coverage, later runs become updates that
+say exactly what changed (rating moves, target revisions, thesis drift). The store is a
+plain JSON directory (`--coverage-store`, default `~/.stockanalyser/coverage`).
 
 ```python
 from stockanalyser.agent import research

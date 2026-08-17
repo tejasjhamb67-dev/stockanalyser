@@ -17,14 +17,14 @@ _SNAPSHOT_LENSES = ["Technical", "Spike", "Valuation"]
 _SCREEN_LENSES = _SNAPSHOT_LENSES + ["Fundamental", "Quality"]
 
 # the deepest tier this build renders as a first-class product
-MAX_IMPLEMENTED = Depth.DEEP_DIVE
+MAX_IMPLEMENTED = Depth.INITIATION
 
 
 @dataclass
 class ResearchPlan:
     mandate: Mandate
     lenses: list[str]
-    product: str                 # "snapshot" | "screen" | "tearsheet" | "deepdive"
+    product: str                 # snapshot | screen | tearsheet | deepdive | initiation
     notes: list[str] = field(default_factory=list)
 
 
@@ -38,15 +38,14 @@ def plan_research(mandate: Mandate) -> ResearchPlan:
         return ResearchPlan(mandate, list(_SCREEN_LENSES), "screen", notes)
     if depth == Depth.BRIEF:
         return ResearchPlan(mandate, list(ALL_LENSES), "tearsheet", notes)
+    if depth == Depth.DEEP_DIVE:
+        return ResearchPlan(mandate, list(ALL_LENSES), "deepdive", notes)
 
-    # L3 deep dive runs all nine lenses AND builds the driver model + valuation.
-    # L4/L5 render the L3 deep dive for now, with a note on what still lands later.
+    # L4 initiation runs everything + model + estimates + coverage memory.
+    # L5 living coverage renders the initiation for now, with a note on what lands later.
     if depth > MAX_IMPLEMENTED:
-        pending = {
-            Depth.INITIATION: "the industry primer, formal rating and ESG section",
-            Depth.COVERAGE: "estimate-revision tracking and earnings automation",
-        }.get(depth, "the flagship product")
         notes.append(
-            f"Requested {depth.label}; {pending} arrives in a later build phase. "
-            f"Showing the full L3 deep dive — model, triangulated valuation and thesis.")
-    return ResearchPlan(mandate, list(ALL_LENSES), "deepdive", notes)
+            f"Requested {depth.label}; live estimate-revision tracking and earnings "
+            f"automation arrive in a later build phase. Showing the full L4 initiation "
+            f"— thesis, estimates, triangulated valuation, risks and catalysts.")
+    return ResearchPlan(mandate, list(ALL_LENSES), "initiation", notes)

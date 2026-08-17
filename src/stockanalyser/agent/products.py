@@ -258,3 +258,109 @@ def _skew_word(up: float, down: float) -> str:
     if ratio >= 1:
         return f"balanced (~{ratio:.1f}:1)"
     return f"unfavourable (~{ratio:.1f}:1)"
+
+
+# ── L4 initiation of coverage ────────────────────────────────────────────────
+def render_initiation(
+    mandate: Mandate, company, generated_at: str, lenses: dict[str, LensResult],
+    composite: float | None, verdict: Verdict, call: Call,
+    bull: list[str], bear: list[str], monitor: list[str],
+    appraisal=None, consensus=None, catalysts=None, coverage_note: str = "",
+    plan_notes: list[str] | None = None, warnings: list[str] | None = None,
+) -> str:
+    plan_notes = plan_notes or []
+    warnings = warnings or []
+    comp = f"{composite:.1f}/100" if composite is not None else "n/a"
+    L: list[str] = []
+    bar = "═" * 62
+    L.append(bar)
+    L.append(" INITIATION OF COVERAGE" if coverage_note.startswith("INITIAT")
+             else " COVERAGE UPDATE")
+    L.append(f" {company.name}  ({company.ticker})")
+    L.append(f" {company.sector or 'Sector n/a'}"
+             + (f" · {company.industry}" if company.industry else ""))
+    L.append(bar)
+    L.append(f" MANDATE  {mandate.headline}")
+    for line in _market_framing(mandate):
+        L.append(f"          {line}")
+    L.append(f"          As of {generated_at}")
+    L.append("")
+
+    # the call box
+    L.append(f" {_call_line(mandate, call)}")
+    if appraisal is not None and appraisal.weighted_target is not None:
+        L.append(f" 12-month target: {appraisal.weighted_target:,.0f} {appraisal.currency} "
+                 f"({appraisal.target_upside_pct:+.0f}% vs price)   "
+                 f"range {appraisal.fair_low:,.0f}–{appraisal.fair_high:,.0f}")
+    L.append(f" Composite: {comp}    Verdict: {verdict.value}")
+    if coverage_note:
+        L.append(f" Coverage: {coverage_note}")
+    if call.gate == "fail":
+        L.append(" ⚠ Forensic gate FAILED — constructive calls are capped.")
+    L.append("")
+
+    # 1 · industry & positioning primer
+    L.append(" 1 · Industry & positioning")
+    sector = lenses.get("Sector")
+    if sector and sector.summary:
+        L.append(f"   {sector.summary[:200]}")
+    L.append(f"   Regime: {mandate.market.accounting} / {mandate.market.regulator}; "
+             f"benchmark {mandate.market.benchmarks[0]}; macro {mandate.market.macro_anchor}.")
+    L.append("")
+
+    # 2 · thesis
+    L.append(" 2 · Investment thesis")
+    if bull:
+        L.append("   Bull:")
+        L.extend(f"     + {b}" for b in bull[:4])
+    if bear:
+        L.append("   Bear:")
+        L.extend(f"     - {b}" for b in bear[:4])
+    L.append("")
+
+    # 3 · estimates & consensus
+    if consensus is not None:
+        L.append(" 3 · Estimates & consensus")
+        L.append(f"   Source: {consensus.source}")
+        if consensus.estimates:
+            L.append("     metric        FY1          FY2")
+            for e in consensus.estimates:
+                f1 = f"{e.fy1:,.0f}" if e.fy1 is not None else "n/a"
+                f2 = f"{e.fy2:,.0f}" if e.fy2 is not None else "n/a"
+                L.append(f"     {e.metric.ljust(10)} {f1:>10}   {f2:>10}")
+        if consensus.variant:
+            L.append(f"   Variant: {consensus.variant}")
+        L.append(f"   {consensus.note}")
+        L.append("")
+
+    # 4 · valuation (reuse the deep-dive block)
+    L.append(" 4 · Valuation")
+    for line in _valuation_block(appraisal)[1:]:      # drop the block's own header
+        L.append(line)
+
+    # 5 · risks & what would change the call
+    L.append(" 5 · Risks & monitorables")
+    gov = lenses.get("Governance")
+    if gov and gov.summary:
+        L.append(f"   Governance: {gov.summary[:150]}")
+    for m in monitor[:4]:
+        L.append(f"   • {m}")
+    L.append("")
+
+    # 6 · catalysts
+    if catalysts:
+        L.append(" 6 · Catalyst calendar")
+        for c in catalysts:
+            L.append(f"   {c.date}  [{c.kind}]  {c.label}")
+        L.append("   (past events shown; next scheduled results are the live monitorable)")
+        L.append("")
+
+    L.append(_side_closing(mandate, verdict, call, appraisal))
+    L.append("")
+    for note in plan_notes:
+        L.append(f" ℹ {note}")
+    for w in warnings:
+        L.append(f" ⚠ {w}")
+    L.append("")
+    L.append(f" {DISCLAIMER}")
+    return "\n".join(L)

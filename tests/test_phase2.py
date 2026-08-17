@@ -109,10 +109,10 @@ def test_deep_dive_plan_uses_deepdive_product():
     assert len(plan.lenses) == 9
 
 
-def test_initiation_degrades_to_deepdive_with_note():
-    plan = plan_research(MandateRouter().route("x", depth="L4"))
+def test_deep_dive_is_deepdive_not_initiation():
+    # L3 is the deep dive; L4 is a distinct initiation product (see test_phase3)
+    plan = plan_research(MandateRouter().route("x", depth="L3"))
     assert plan.product == "deepdive"
-    assert plan.notes and "later build phase" in plan.notes[0]
 
 
 def test_end_to_end_deep_dive_sell_side():
