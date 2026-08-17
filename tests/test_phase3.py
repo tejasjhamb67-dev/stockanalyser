@@ -96,10 +96,11 @@ def test_initiation_plan():
     assert plan.product == "initiation"
 
 
-def test_living_coverage_degrades_to_initiation():
+def test_living_coverage_is_now_first_class():
+    # L5 became its own product in Phase 4 (see test_phase4); no longer a degrade
     plan = plan_research(MandateRouter().route("x", depth="L5"))
-    assert plan.product == "initiation"
-    assert plan.notes and "later build phase" in plan.notes[0]
+    assert plan.product == "coverage"
+    assert not plan.notes
 
 
 # ── end-to-end initiation ────────────────────────────────────────────────────

@@ -17,12 +17,17 @@ from .appraisal import Appraisal, build_appraisal
 from .catalysts import Catalyst, build_catalysts
 from .consensus import ConsensusView, build_consensus
 from .core import ResearchOutput, research
+from .coverage import (
+    EarningsPreview, EarningsReview, RevisionLine, ThesisTracker,
+    earnings_preview, earnings_review, estimate_revisions, thesis_tracker,
+)
 from .mandate import Depth, Mandate, MandateRouter, Side
 from .markets import MarketProfile, PROFILES, infer_profile
 from .memory import CoverageEntry, CoverageMemory, coverage_note
 from .modeling import Assumptions, Projection, build_projection, derive_assumptions
 from .planner import ResearchPlan, plan_research
 from .products import Call, decide_call
+from .universe import UniverseRow, rank_universe, render_conviction_list
 
 __all__ = [
     "research", "ResearchOutput",
@@ -35,4 +40,7 @@ __all__ = [
     "ConsensusView", "build_consensus",
     "Catalyst", "build_catalysts",
     "CoverageEntry", "CoverageMemory", "coverage_note",
+    "EarningsReview", "EarningsPreview", "RevisionLine", "ThesisTracker",
+    "earnings_review", "earnings_preview", "estimate_revisions", "thesis_tracker",
+    "UniverseRow", "rank_universe", "render_conviction_list",
 ]

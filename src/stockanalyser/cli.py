@@ -118,6 +118,19 @@ def cmd_research(args):
     return 0
 
 
+def cmd_conviction(args):
+    from .agent import rank_universe, render_conviction_list
+    from .agent.mandate import _coerce_side, Side
+    cfg = Config.default()
+    cfg.provider = args.provider
+    cfg.use_llm = False
+    rows = rank_universe(args.queries, side=args.side, market=args.market,
+                         depth=args.depth or "L3", config=cfg)
+    side = _coerce_side(args.side) if args.side else Side.SELL_SIDE
+    print("\n" + render_conviction_list(rows, side) + "\n")
+    return 0
+
+
 def cmd_list(args):
     for c in OfflineProvider().catalogue():
         print(f"  {c.symbol.ljust(12)} {c.name}  ({c.sector or 'n/a'})")
@@ -161,6 +174,16 @@ def main(argv=None):
     r.add_argument("--no-llm", action="store_true", help="force deterministic output")
     r.add_argument("--quiet", action="store_true", help="suppress the printed product")
     r.set_defaults(func=cmd_research)
+
+    cv = sub.add_parser("conviction",
+                        help="rank several names into a conviction / best-ideas list")
+    cv.add_argument("queries", nargs="+", help="two or more names/tickers")
+    cv.add_argument("--side", choices=["sell-side", "buy-side"], default=None)
+    cv.add_argument("--depth", default=None, help="depth per name (default L3)")
+    cv.add_argument("--market", default=None, help="market key (inferred if omitted)")
+    cv.add_argument("--provider", default="auto",
+                    choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+    cv.set_defaults(func=cmd_conviction)
 
     l = sub.add_parser("list", help="list bundled sample companies")
     l.set_defaults(func=cmd_list)

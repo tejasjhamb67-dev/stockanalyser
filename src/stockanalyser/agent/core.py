@@ -22,6 +22,9 @@ from . import markets, products
 from .appraisal import Appraisal, build_appraisal
 from .catalysts import Catalyst, build_catalysts
 from .consensus import ConsensusView, build_consensus
+from .coverage import (
+    earnings_preview, earnings_review, estimate_revisions, thesis_tracker,
+)
 from .mandate import Depth, Mandate, MandateRouter, Side
 from .memory import CoverageEntry, CoverageMemory, coverage_note, now_date
 from .planner import ResearchPlan, plan_research
@@ -98,20 +101,22 @@ def research(
     # L3+: build the driver model + triangulated valuation first, so the call can be
     # reconciled with the price target (a rating must be consistent with fair value)
     appraisal = None
-    if plan.product in ("deepdive", "initiation"):
+    if plan.product in ("deepdive", "initiation", "coverage"):
         appraisal = build_appraisal(data.fundamentals, mandate.market, config)
 
     call = products.decide_call(mandate.side, verdict, lenses, appraisal)
 
-    # L4: estimates/consensus, catalyst calendar, and coverage memory (track the call)
+    # L4/L5: estimates/consensus, catalyst calendar, and coverage memory (track the call)
     consensus = catalysts = None
     note = ""
-    if plan.product == "initiation":
+    cov = None
+    if plan.product in ("initiation", "coverage"):
         consensus = build_consensus(appraisal, data.fundamentals)
         catalysts = build_catalysts(data)
-        note = _update_coverage(
+        cov = _update_coverage(
             company, mandate, call, appraisal, composite, verdict, monitor,
-            coverage_store, record_coverage)
+            consensus, coverage_store, record_coverage)
+        note = cov.note
 
     if plan.product == "initiation":
         rendered = products.render_initiation(
@@ -120,6 +125,16 @@ def research(
             monitor=monitor, appraisal=appraisal, consensus=consensus,
             catalysts=catalysts, coverage_note=note, plan_notes=plan.notes,
             warnings=warnings)
+    elif plan.product == "coverage":
+        review = earnings_review(data.fundamentals)
+        preview = earnings_preview(consensus)
+        revisions = estimate_revisions(cov.prev, consensus)
+        tracker = thesis_tracker(cov.history, cov.entry, cov.prev, monitor)
+        rendered = products.render_coverage(
+            mandate=mandate, company=company, generated_at=generated_at, call=call,
+            verdict=verdict, composite=composite, appraisal=appraisal,
+            coverage_note=note, review=review, preview=preview, revisions=revisions,
+            tracker=tracker, monitor=monitor, plan_notes=plan.notes, warnings=warnings)
     else:
         rendered = products.render_product(
             mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
@@ -143,29 +158,41 @@ def research(
     )
 
 
+@dataclass
+class _Coverage:
+    note: str
+    prev: CoverageEntry | None
+    entry: CoverageEntry
+    history: list[CoverageEntry]
+
+
 def _update_coverage(company, mandate, call, appraisal, composite, verdict, monitor,
-                     store, record: bool) -> str:
+                     consensus, store, record: bool) -> _Coverage:
     """Diff this call against the last one on record, then persist it. Fully defensive —
     coverage tracking must never break the research path."""
+    est = {e.metric: e.fy1 for e in consensus.estimates} if consensus else {}
+    entry = CoverageEntry(
+        symbol=company.symbol, name=company.name, date=now_date(),
+        side=mandate.side.value, market=mandate.market.key,
+        rating=call.headline, conviction=call.conviction,
+        target=appraisal.weighted_target if appraisal else None,
+        upside_pct=appraisal.target_upside_pct if appraisal else None,
+        composite=composite, verdict=verdict.value,
+        base_growth=appraisal.base_growth if appraisal else None,
+        gate=call.gate, monitorables=list(monitor[:4]),
+        est_rev_fy1=est.get("Revenue"), est_ebitda_fy1=est.get("EBITDA"),
+        est_eps_fy1=est.get("EPS"))
     try:
         mem = CoverageMemory(store)
-        prev = mem.load(company.symbol)
-        entry = CoverageEntry(
-            symbol=company.symbol, name=company.name, date=now_date(),
-            side=mandate.side.value, market=mandate.market.key,
-            rating=call.headline, conviction=call.conviction,
-            target=appraisal.weighted_target if appraisal else None,
-            upside_pct=appraisal.target_upside_pct if appraisal else None,
-            composite=composite, verdict=verdict.value,
-            base_growth=appraisal.base_growth if appraisal else None,
-            gate=call.gate, monitorables=list(monitor[:4]))
+        history = mem.history(company.symbol)         # prior calls (excludes this one)
+        prev = history[-1] if history else None
         note = coverage_note(prev, entry)
-        if record:
-            if not mem.record(entry):
-                note += " (coverage store not writable — not persisted)"
-        return note
+        if record and not mem.record(entry):
+            note += " (coverage store not writable — not persisted)"
+        return _Coverage(note=note, prev=prev, entry=entry, history=history)
     except Exception as exc:  # never sink research over memory bookkeeping
-        return f"Coverage memory unavailable ({type(exc).__name__})."
+        return _Coverage(note=f"Coverage memory unavailable ({type(exc).__name__}).",
+                         prev=None, entry=entry, history=[])
 
 
 def _now() -> str:

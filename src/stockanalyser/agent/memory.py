@@ -38,6 +38,10 @@ class CoverageEntry:
     base_growth: float | None
     gate: str
     monitorables: list[str] = field(default_factory=list)
+    # persisted forward estimates, so the next run can compute revisions
+    est_rev_fy1: float | None = None
+    est_ebitda_fy1: float | None = None
+    est_eps_fy1: float | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

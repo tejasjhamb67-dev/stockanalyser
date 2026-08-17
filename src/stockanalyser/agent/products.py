@@ -364,3 +364,91 @@ def render_initiation(
     L.append("")
     L.append(f" {DISCLAIMER}")
     return "\n".join(L)
+
+
+# ── L5 living coverage / maintenance note ────────────────────────────────────
+def render_coverage(
+    mandate: Mandate, company, generated_at: str, call: Call, verdict: Verdict,
+    composite: float | None, appraisal=None, coverage_note: str = "",
+    review=None, preview=None, revisions=None, tracker=None,
+    monitor: list[str] | None = None, plan_notes: list[str] | None = None,
+    warnings: list[str] | None = None,
+) -> str:
+    monitor = monitor or []
+    plan_notes = plan_notes or []
+    warnings = warnings or []
+    L: list[str] = []
+    bar = "═" * 62
+    L.append(bar)
+    L.append(" LIVING COVERAGE · MAINTENANCE NOTE")
+    L.append(f" {company.name}  ({company.ticker})")
+    L.append(bar)
+    L.append(f" MANDATE  {mandate.headline}")
+    L.append(f"          As of {generated_at}")
+    L.append("")
+    L.append(f" {_call_line(mandate, call)}")
+    comp_str = f"    Composite: {composite:.1f}/100" if composite is not None else ""
+    if appraisal is not None and appraisal.weighted_target is not None:
+        L.append(f" Target: {appraisal.weighted_target:,.0f} {appraisal.currency} "
+                 f"({appraisal.target_upside_pct:+.0f}%){comp_str}")
+    elif comp_str:
+        L.append(comp_str.strip())
+    if coverage_note:
+        L.append(f" Coverage: {coverage_note}")
+    if call.gate == "fail":
+        L.append(" ⚠ Forensic gate FAILED — constructive calls are capped.")
+    L.append("")
+
+    if tracker and tracker.rating_trajectory:
+        traj = " → ".join(f"{d}:{r}" for d, r in tracker.rating_trajectory[-4:])
+        L.append(" Rating trajectory")
+        L.append(f"   {traj}")
+        L.append("")
+
+    if review:
+        L.append(f" Results review — {review.period}")
+        L.extend(f"   {ln}" for ln in review.lines)
+        L.append("")
+
+    if revisions:
+        L.append(" Estimate revisions (vs last note)")
+        for rv in revisions:
+            d = f"{rv.delta_pct:+.1f}%" if rv.delta_pct is not None else "n/a"
+            L.append(f"   {rv.metric.ljust(8)} {rv.old:,.0f} → {rv.new:,.0f}  ({d})")
+        L.append("")
+    elif review:  # only note "unchanged" once we actually have a review context
+        L.append(" Estimate revisions: none — estimates unchanged since the last note.")
+        L.append("")
+
+    if tracker and (tracker.new_monitorables or tracker.resolved_monitorables):
+        L.append(" Thesis tracking")
+        for m in tracker.new_monitorables[:4]:
+            L.append(f"   + NEW  {m}")
+        for m in tracker.resolved_monitorables[:4]:
+            L.append(f"   - RESOLVED/DROPPED  {m}")
+        L.append("")
+
+    if preview:
+        L.append(f" Preview — {preview.label}")
+        if preview.est_revenue is not None:
+            L.append(f"   est. revenue {preview.est_revenue:,.0f}"
+                     + (f" · EBITDA {preview.est_ebitda:,.0f}" if preview.est_ebitda else "")
+                     + (f" · EPS {preview.est_eps:,.1f}" if preview.est_eps else ""))
+        for w in preview.watch[:3]:
+            L.append(f"   watch: {w}")
+        L.append("")
+
+    if monitor:
+        L.append(" Open monitorables")
+        L.extend(f"   • {m}" for m in monitor[:4])
+        L.append("")
+
+    L.append(_side_closing(mandate, verdict, call, appraisal))
+    L.append("")
+    for note in plan_notes:
+        L.append(f" ℹ {note}")
+    for w in warnings:
+        L.append(f" ⚠ {w}")
+    L.append("")
+    L.append(f" {DISCLAIMER}")
+    return "\n".join(L)

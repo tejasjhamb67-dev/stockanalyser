@@ -51,6 +51,12 @@ python -m stockanalyser research "RELIANCE" --side sell-side --depth L3
 # an L4 initiation: full report + estimates + catalysts + coverage memory
 python -m stockanalyser research "RELIANCE" --side sell-side --depth L4
 
+# an L5 living-coverage note: results review, estimate revisions, thesis tracking
+python -m stockanalyser research "RELIANCE" --side sell-side --depth L5
+
+# a conviction / best-ideas list ranked across several names
+python -m stockanalyser conviction "RELIANCE" "Hitachi Energy" "REDFLAG" --side buy-side
+
 # the same name as a buy-side snapshot — different call, different framing
 python -m stockanalyser research "Hitachi Energy" --side buy-side --depth L0
 
@@ -71,6 +77,15 @@ is connected), the triangulated valuation, risks, and a **catalyst calendar** �
 to **coverage memory**: the first run initiates coverage, later runs become updates that
 say exactly what changed (rating moves, target revisions, thesis drift). The store is a
 plain JSON directory (`--coverage-store`, default `~/.stockanalyser/coverage`).
+
+At **L5** it maintains the name: a **results review** of the latest period, **estimate
+revisions** versus the last note, **thesis tracking** (which monitorables resolved, which
+are new, the rating's trajectory), and a **preview** of what to watch next. The
+`conviction` command runs the agent across several names and returns a **best-ideas list**
+ranked by return-to-target with a quality tilt — forensic red flags sink to the bottom.
+
+All six depth tiers (L0–L5) run today on bundled data; connecting a live provider
+(`yfinance` / `alphavantage` / a `screener` adapter) lifts every tier onto real filings.
 
 ```python
 from stockanalyser.agent import research

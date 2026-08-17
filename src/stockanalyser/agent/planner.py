@@ -17,14 +17,21 @@ _SNAPSHOT_LENSES = ["Technical", "Spike", "Valuation"]
 _SCREEN_LENSES = _SNAPSHOT_LENSES + ["Fundamental", "Quality"]
 
 # the deepest tier this build renders as a first-class product
-MAX_IMPLEMENTED = Depth.INITIATION
+MAX_IMPLEMENTED = Depth.COVERAGE
+
+_PRODUCT_BY_DEPTH = {
+    Depth.BRIEF: "tearsheet",
+    Depth.DEEP_DIVE: "deepdive",
+    Depth.INITIATION: "initiation",
+    Depth.COVERAGE: "coverage",
+}
 
 
 @dataclass
 class ResearchPlan:
     mandate: Mandate
     lenses: list[str]
-    product: str                 # snapshot | screen | tearsheet | deepdive | initiation
+    product: str        # snapshot | screen | tearsheet | deepdive | initiation | coverage
     notes: list[str] = field(default_factory=list)
 
 
@@ -36,16 +43,7 @@ def plan_research(mandate: Mandate) -> ResearchPlan:
         return ResearchPlan(mandate, list(_SNAPSHOT_LENSES), "snapshot", notes)
     if depth == Depth.SCREEN:
         return ResearchPlan(mandate, list(_SCREEN_LENSES), "screen", notes)
-    if depth == Depth.BRIEF:
-        return ResearchPlan(mandate, list(ALL_LENSES), "tearsheet", notes)
-    if depth == Depth.DEEP_DIVE:
-        return ResearchPlan(mandate, list(ALL_LENSES), "deepdive", notes)
 
-    # L4 initiation runs everything + model + estimates + coverage memory.
-    # L5 living coverage renders the initiation for now, with a note on what lands later.
-    if depth > MAX_IMPLEMENTED:
-        notes.append(
-            f"Requested {depth.label}; live estimate-revision tracking and earnings "
-            f"automation arrive in a later build phase. Showing the full L4 initiation "
-            f"— thesis, estimates, triangulated valuation, risks and catalysts.")
-    return ResearchPlan(mandate, list(ALL_LENSES), "initiation", notes)
+    # L2 and deeper all run the full lens set; the product escalates with depth
+    product = _PRODUCT_BY_DEPTH[depth]
+    return ResearchPlan(mandate, list(ALL_LENSES), product, notes)
