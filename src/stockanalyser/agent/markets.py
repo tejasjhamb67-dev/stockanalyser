@@ -40,6 +40,20 @@ class MarketProfile:
     def is_generic(self) -> bool:
         return self.key == "XX"
 
+    @property
+    def default_wacc(self) -> float:
+        """A market-anchored discount rate — the local risk-free + equity premium
+        blend, used as the DCF default when nothing better is supplied. Real spreads:
+        higher in EM/India, lower in Japan/developed Europe."""
+        return _DEFAULT_WACC.get(self.key, 0.11)
+
+
+# market-anchored default discount rates (blended cost of capital)
+_DEFAULT_WACC: dict[str, float] = {
+    "US": 0.09, "CA": 0.10, "GB": 0.09, "EU": 0.09, "IN": 0.13,
+    "JP": 0.07, "HK": 0.10, "CN": 0.11, "AU": 0.09, "SG": 0.09, "XX": 0.11,
+}
+
 
 # ── the registry ─────────────────────────────────────────────────────────────
 GENERIC = MarketProfile(

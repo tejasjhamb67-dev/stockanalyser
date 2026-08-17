@@ -13,9 +13,11 @@ See docs/equity-research-agent-blueprint.html for the full design.
 """
 from __future__ import annotations
 
+from .appraisal import Appraisal, build_appraisal
 from .core import ResearchOutput, research
 from .mandate import Depth, Mandate, MandateRouter, Side
 from .markets import MarketProfile, PROFILES, infer_profile
+from .modeling import Assumptions, Projection, build_projection, derive_assumptions
 from .planner import ResearchPlan, plan_research
 from .products import Call, decide_call
 
@@ -25,4 +27,6 @@ __all__ = [
     "MarketProfile", "PROFILES", "infer_profile",
     "ResearchPlan", "plan_research",
     "Call", "decide_call",
+    "Appraisal", "build_appraisal",
+    "Assumptions", "Projection", "build_projection", "derive_assumptions",
 ]

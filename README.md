@@ -45,12 +45,22 @@ runs the lenses, and renders a tier-appropriate product framed for that mandate.
 # a sell-side company brief (market auto-inferred from the NSE listing)
 python -m stockanalyser research "Hitachi Energy" --side sell-side --depth L2
 
+# an L3 deep dive: driver model + triangulated DCF + scenario-weighted target
+python -m stockanalyser research "RELIANCE" --side sell-side --depth L3
+
 # the same name as a buy-side snapshot — different call, different framing
 python -m stockanalyser research "Hitachi Energy" --side buy-side --depth L0
 
 # side/depth/market are inferred from the request when not given
 python -m stockanalyser research "should I buy RELIANCE for my book?"
 ```
+
+At **L3** the agent builds a driver-based forecast (revenue → margins → unlevered FCF,
+with capex normalising toward maintenance in the terminal year), values it three ways —
+**two-stage DCF at a market-anchored WACC, an exit-multiple cross-check, and a reverse-DCF**
+that reads the growth the price already implies (the variant-perception view) — across
+**bull / base / bear**, and reconciles the rating to the resulting price target (a strong
+business at an indefensible price is capped to Sell/Avoid, and vice-versa).
 
 ```python
 from stockanalyser.agent import research

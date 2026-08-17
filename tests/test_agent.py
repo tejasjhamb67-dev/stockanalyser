@@ -86,8 +86,9 @@ def test_brief_runs_all_nine():
 
 
 def test_deeper_tiers_degrade_with_note():
+    # L4/L5 now degrade to the L3 deep dive (not the L2 tearsheet), with a note
     plan = plan_research(MandateRouter().route("x", depth="L4"))
-    assert plan.product == "tearsheet"
+    assert plan.product == "deepdive"
     assert plan.notes and "later build phase" in plan.notes[0]
 
 

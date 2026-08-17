@@ -19,6 +19,7 @@ from ..data import resolve_and_fetch
 from ..models import Company, LensResult, Verdict
 from ..report.builder import CompanyNotFound
 from . import markets, products
+from .appraisal import Appraisal, build_appraisal
 from .mandate import Depth, Mandate, MandateRouter, Side
 from .planner import ResearchPlan, plan_research
 from .products import Call
@@ -36,6 +37,7 @@ class ResearchOutput:
     composite_score: float | None
     verdict: Verdict
     call: Call
+    appraisal: Appraisal | None = None
     bull_thesis: list[str] = field(default_factory=list)
     bear_thesis: list[str] = field(default_factory=list)
     monitorables: list[str] = field(default_factory=list)
@@ -81,19 +83,29 @@ def research(
     composite = scoring.composite(lenses, config.weights)
     verdict = scoring.verdict_from(composite)
     bull, bear, monitor = scoring.bull_bear_monitorables(lenses)
-    call = products.decide_call(mandate.side, verdict, lenses)
 
     warnings = _provenance_warnings(company, data, source, lenses)
+    generated_at = _now()
+
+    # L3+: build the driver model + triangulated valuation first, so the call can be
+    # reconciled with the price target (a rating must be consistent with fair value)
+    appraisal = None
+    if plan.product == "deepdive":
+        appraisal = build_appraisal(data.fundamentals, mandate.market, config)
+
+    call = products.decide_call(mandate.side, verdict, lenses, appraisal)
 
     rendered = products.render_product(
-        mandate=mandate, company=company, generated_at=_now(), lenses=lenses,
+        mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
         composite=composite, verdict=verdict, bull=bull, bear=bear, monitor=monitor,
         call=call, product=plan.product, plan_notes=plan.notes, warnings=warnings,
+        appraisal=appraisal,
     )
 
     return ResearchOutput(
-        mandate=mandate, company=company, generated_at=_now(), plan=plan,
+        mandate=mandate, company=company, generated_at=generated_at, plan=plan,
         lenses=lenses, composite_score=composite, verdict=verdict, call=call,
+        appraisal=appraisal,
         bull_thesis=bull, bear_thesis=bear, monitorables=monitor, product=rendered,
         data_sources={
             "prices": data.prices.source if data.prices else "n/a",

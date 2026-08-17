@@ -146,6 +146,7 @@
   .chip{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;background:var(--surface-2);
     border:1px solid var(--line);border-radius:5px;padding:3px 8px;color:var(--ink-soft)}
   .chip.out{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .chip.done{border-color:var(--bull);color:var(--bull);background:transparent;font-weight:600}
 
   /* ---- pipeline / architecture ---- */
   .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
@@ -208,7 +209,7 @@
     <div class="tape">
       <span><b>EQUITY RESEARCH</b> · AGENT ARCHITECTURE</span>
       <span class="sep">|</span>
-      <span>BLUEPRINT v0.1</span>
+      <span>BLUEPRINT v0.2 · L0–L3 SHIPPED</span>
       <span class="sep">|</span>
       <span>BUILT ON <b>stockanalyser</b> — NINE-LENS ENGINE</span>
       <span class="sep">|</span>
@@ -599,11 +600,12 @@
       <div class="pc"><h3>Agent shell + mandate over the existing engine</h3>
         <p>A mandate router (side × market × depth) and planner that wraps the nine lenses as tools, plus the
           product renderer.</p>
-        <div class="chips"><span class="chip">mandate router</span><span class="chip">market profiles</span><span class="chip">planner + tool loop</span><span class="chip">lens-as-tool adapters</span><span class="chip out">delivers L0–L2</span></div></div></div>
+        <div class="chips"><span class="chip">mandate router</span><span class="chip">market profiles</span><span class="chip">planner + tool loop</span><span class="chip">lens-as-tool adapters</span><span class="chip done">✓ shipped — L0–L2</span></div></div></div>
     <div class="phase"><div class="p"><span class="pn">2</span><span class="pl">model</span></div>
       <div class="pc"><h3>Modelling & valuation triangulation</h3>
-        <p>Driver-based 3-statement engine + DCF/SOTP/multiples reconciliation + scenario tree.</p>
-        <div class="chips"><span class="chip">3-statement model</span><span class="chip">valuation engine</span><span class="chip out">delivers L3</span></div></div></div>
+        <p>Driver-based forecast (terminal-normalised capex) + DCF / exit-multiple / reverse-DCF
+          reconciliation + bull/base/bear tree, with the price target reconciling the rating.</p>
+        <div class="chips"><span class="chip">driver model</span><span class="chip">market-anchored WACC</span><span class="chip">scenario tree</span><span class="chip">reverse-DCF variant</span><span class="chip done">✓ shipped — L3</span></div></div></div>
     <div class="phase"><div class="p"><span class="pn">3</span><span class="pl">cover</span></div>
       <div class="pc"><h3>Consensus, memory & initiation</h3>
         <p>Estimate/consensus layer, coverage memory per name, catalyst tracking, initiation template.</p>
