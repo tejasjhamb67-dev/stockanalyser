@@ -83,6 +83,40 @@ def cmd_analyse(args):
     return 0
 
 
+def cmd_research(args):
+    from .agent import research
+    from .agent.core import CompanyNotFound as _NF  # re-exported build error
+    cfg = Config.default()
+    cfg.provider = args.provider
+    cfg.use_llm = not args.no_llm
+    try:
+        out = research(args.query, side=args.side, depth=args.depth,
+                       market=args.market, config=cfg)
+    except _NF as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if not args.quiet:
+        print("\n" + out.product + "\n")
+    if args.json:
+        import json
+        payload = {
+            "mandate": {
+                "side": out.mandate.side.value,
+                "depth": out.mandate.depth.label,
+                "market": out.mandate.market.key,
+            },
+            "company": out.company.ticker,
+            "composite_score": out.composite_score,
+            "verdict": out.verdict.value,
+            "call": {"headline": out.call.headline, "conviction": out.call.conviction,
+                     "forensic_gate": out.call.gate},
+            "generated_at": out.generated_at,
+        }
+        Path(args.json).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(f" json → {Path(args.json).resolve()}")
+    return 0
+
+
 def cmd_list(args):
     for c in OfflineProvider().catalogue():
         print(f"  {c.symbol.ljust(12)} {c.name}  ({c.sector or 'n/a'})")
@@ -108,6 +142,22 @@ def main(argv=None):
     a.add_argument("--no-llm", action="store_true", help="force deterministic narrative")
     a.add_argument("--quiet", action="store_true", help="suppress the terminal summary")
     a.set_defaults(func=cmd_analyse)
+
+    r = sub.add_parser("research",
+                       help="run the research agent (mandate: side × market × depth)")
+    r.add_argument("query", help="company name or ticker")
+    r.add_argument("--side", choices=["sell-side", "buy-side"], default=None,
+                   help="research posture (inferred from the query if omitted)")
+    r.add_argument("--depth", default=None,
+                   help="L0..L5 or a name (snapshot/screen/brief/deep-dive/initiation/coverage)")
+    r.add_argument("--market", default=None,
+                   help="market key: US, IN, GB, EU, JP, HK, CN, AU, SG (inferred if omitted)")
+    r.add_argument("--provider", default="auto",
+                   choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+    r.add_argument("--json", metavar="FILE", help="write a machine-readable summary here")
+    r.add_argument("--no-llm", action="store_true", help="force deterministic output")
+    r.add_argument("--quiet", action="store_true", help="suppress the printed product")
+    r.set_defaults(func=cmd_research)
 
     l = sub.add_parser("list", help="list bundled sample companies")
     l.set_defaults(func=cmd_list)

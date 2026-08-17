@@ -34,6 +34,37 @@ python -m stockanalyser analyse RELIANCE --provider offline --json reliance.json
 python -m stockanalyser list
 ```
 
+### Research agent (mandate: side × market × depth)
+
+On top of the lenses sits an **equity-research agent** that behaves like an analyst:
+it fixes a *mandate* before pulling data — **sell-side vs buy-side**, the **market**
+(any geography), and a **depth tier** (L0 snapshot → L5 living coverage) — then plans,
+runs the lenses, and renders a tier-appropriate product framed for that mandate.
+
+```bash
+# a sell-side company brief (market auto-inferred from the NSE listing)
+python -m stockanalyser research "Hitachi Energy" --side sell-side --depth L2
+
+# the same name as a buy-side snapshot — different call, different framing
+python -m stockanalyser research "Hitachi Energy" --side buy-side --depth L0
+
+# side/depth/market are inferred from the request when not given
+python -m stockanalyser research "should I buy RELIANCE for my book?"
+```
+
+```python
+from stockanalyser.agent import research
+out = research("Hitachi Energy", side="buy-side", depth="L2")
+print(out.headline)      # Buy-side · L2 · India → Own (composite 65.9/100)
+print(out.product)       # the rendered tearsheet
+```
+
+The same evidence produces a **sell-side rating** (Buy/Hold/Sell, vs benchmark) or a
+**buy-side position stance** (Own/Pass/Avoid, absolute) — and a forensic gate can veto
+a constructive call on either side. Phase 1 ships L0–L2; L3 modelling, L4 initiation and
+L5 living coverage slot in behind the same mandate. Full design:
+[`docs/equity-research-agent-blueprint.html`](docs/equity-research-agent-blueprint.html).
+
 ### Web app / site
 
 ```bash

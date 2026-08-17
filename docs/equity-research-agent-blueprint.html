@@ -90,6 +90,31 @@
   .diff{border-left:3px solid var(--brass)}
   .diff .tag{color:var(--brass)}
 
+  /* ---- mandate ---- */
+  .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:24px 0 30px}
+  .axis{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 18px;
+    box-shadow:var(--shadow);border-top:3px solid var(--accent)}
+  .axis.two{border-top-color:var(--brass)}
+  .axis .ax{font-family:ui-monospace,Menlo,monospace;font-size:.64rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600}
+  .axis.two .ax{color:var(--brass)}
+  .axis h3{font-size:1.08rem;margin:7px 0 5px}
+  .axis p{margin:0;font-size:.9rem;color:var(--ink-soft)}
+  .vs-scroll{overflow-x:auto;border-radius:11px;box-shadow:var(--shadow)}
+  .vs{min-width:620px;background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .vs-row{display:grid;grid-template-columns:150px 1fr 1fr;border-top:1px solid var(--line-soft)}
+  .vs-row:first-child{border-top:0}
+  .vs-row>div{padding:13px 16px;font-size:.9rem;color:var(--ink-soft)}
+  .vs-row .attr{background:var(--surface-2);color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace;
+    font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;display:flex;align-items:center}
+  .vs-row .sv{border-right:1px solid var(--line-soft)}
+  .vs-row .sv b,.vs-row .bv b{color:var(--ink);font-weight:600}
+  .vs-row.head>div{font-family:-apple-system,sans-serif;font-weight:700;font-size:.82rem;
+    letter-spacing:.04em;text-transform:uppercase;color:#fff;padding:14px 16px}
+  .vs-row.head .attr{background:var(--ink);color:#fff}
+  .vs-row.head .sv{background:var(--accent);color:#fff}
+  .vs-row.head .bv{background:var(--brass);color:#fff}
+
   /* ---- capability rows ---- */
   .cap{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
   .cap-row{display:grid;grid-template-columns:190px 1fr;gap:0;border-top:1px solid var(--line-soft)}
@@ -191,14 +216,14 @@
     </div>
     <span class="eyebrow">Institutional-grade research, autonomously</span>
     <h1 class="title serif">The Analyst <span class="thin">as an Agent</span></h1>
-    <p class="subtitle">A design for a research agent that reasons the way a senior sell-side analyst does — forming a
-      differentiated view, defending it against consensus, pricing it in three scenarios, and revisiting it every
-      quarter — not a chatbot that summarises a screener.</p>
+    <p class="subtitle">A design for a research agent that reasons the way a senior analyst does — buy-side or
+      sell-side, in any market — forming a differentiated view, defending it against consensus, pricing it in three
+      scenarios, and revisiting it every quarter. Not a chatbot that summarises a screener.</p>
     <div class="mast-meta">
       <div><div class="k">Target standard</div><div class="v">Bulge-bracket initiation quality</div></div>
-      <div><div class="k">Substrate</div><div class="v">Existing 9-lens engine</div></div>
+      <div><div class="k">Mandate</div><div class="v">Sell-side · buy-side · any market</div></div>
       <div><div class="k">Depth range</div><div class="v">L0 snapshot → L5 living coverage</div></div>
-      <div><div class="k">Output</div><div class="v">Notes · models · price targets</div></div>
+      <div><div class="k">Substrate</div><div class="v">Existing 9-lens engine</div></div>
     </div>
   </div>
 </header>
@@ -312,10 +337,90 @@
   </div>
 </div></section>
 
-<!-- ============ DEPTH LADDER ============ -->
+<!-- ============ MANDATE ============ -->
 <section><div class="wrap">
   <div class="sec-head">
     <span class="num">03</span>
+    <div class="txt"><span class="eyebrow">Set before any data is pulled</span>
+      <h2 class="serif">The research mandate</h2></div>
+  </div>
+  <p class="lede">Before the agent pulls a single datapoint it fixes three coordinates. Together they are the
+    <b>mandate</b> — and they reshape what gets researched, how it's framed, and what lands on the page. Same engine,
+    a different analyst each time.</p>
+
+  <div class="axes">
+    <div class="axis"><span class="ax">Axis 1 · Side</span><h3 class="serif">Sell-side or buy-side</h3>
+      <p>A recommendation for clients, or a capital-allocation decision for a book. Reframes the whole output.</p></div>
+    <div class="axis two"><span class="ax">Axis 2 · Market</span><h3 class="serif">Geography & regime</h3>
+      <p>Americas, Europe, Asia, Japan, Australia, EM — each a swappable accounting / regulatory / macro profile.</p></div>
+    <div class="axis"><span class="ax">Axis 3 · Depth</span><h3 class="serif">L0 → L5</h3>
+      <p>How far down to drill — snapshot to living coverage. The ladder in the next section.</p></div>
+  </div>
+
+  <h3 class="serif" style="margin:6px 0 4px">Axis 1 — the same facts, a different verdict</h3>
+  <p style="color:var(--ink-soft);max-width:64ch;font-size:.96rem;margin-bottom:16px">Sell-side and buy-side share
+    ~80% of the machinery — the same lenses, the same model. The mandate re-weights and re-frames the last mile: what
+    the note argues, how conviction is expressed, and which risks lead.</p>
+  <div class="vs-scroll"><div class="vs">
+    <div class="vs-row head"><div class="attr">Dimension</div><div class="sv">Sell-side</div><div class="bv">Buy-side</div></div>
+    <div class="vs-row"><div class="attr">Objective</div>
+      <div class="sv">A published <b>rating + price target</b> for clients to act on.</div>
+      <div class="bv">A <b>position decision</b> — own it, pass, or short — and how much.</div></div>
+    <div class="vs-row"><div class="attr">Frame</div>
+      <div class="sv">Relative to coverage &amp; benchmark (<b>Buy / Hold / Sell</b>).</div>
+      <div class="bv"><b>Absolute</b> risk/reward and fit within a portfolio.</div></div>
+    <div class="vs-row"><div class="attr">Core question</div>
+      <div class="sv">Is this a good stock to <b>recommend</b>, vs its peers?</div>
+      <div class="bv">Is this a good use of <b>capital, at this price, right now</b>?</div></div>
+    <div class="vs-row"><div class="attr">Emphasis</div>
+      <div class="sv">Coverage breadth, consensus positioning, defensible &amp; compliant.</div>
+      <div class="bv">Variant perception, <b>asymmetry, sizing, catalysts, entry/exit, liquidity</b>.</div></div>
+    <div class="vs-row"><div class="attr">Horizon</div>
+      <div class="sv">12-month target, maintained across quarters.</div>
+      <div class="bv">Whatever the thesis needs — event-driven to multi-year.</div></div>
+    <div class="vs-row"><div class="attr">Primary output</div>
+      <div class="sv">Initiation / update <b>note</b> for distribution.</div>
+      <div class="bv">Internal <b>investment memo / IC pitch</b> + position sheet.</div></div>
+    <div class="vs-row"><div class="attr">Success metric</div>
+      <div class="sv">Estimate accuracy, rating vs benchmark, client value.</div>
+      <div class="bv"><b>P&amp;L / IRR</b> of the actual position.</div></div>
+    <div class="vs-row"><div class="attr">Voice</div>
+      <div class="sv">Measured, disclosed, house view.</div>
+      <div class="bv">Blunt, decision-forcing, contrarian where warranted.</div></div>
+  </div></div>
+
+  <h3 class="serif" style="margin:34px 0 4px">Axis 2 — one engine, every market</h3>
+  <p style="color:var(--ink-soft);max-width:66ch;font-size:.96rem;margin-bottom:18px">Each geography is a swappable
+    <span class="mono" style="font-size:.85em">MarketProfile</span> carrying its accounting regime, regulator &amp;
+    disclosure cadence, currency/FX anchor, benchmark index, governance conventions and macro drivers. Selecting a
+    market re-parameterises every lens — the forensic lens hunts <b>promoter pledging</b> in Mumbai and <b>litigation
+    reserves</b> in New York: the same code, a different grind.</p>
+  <div class="grid g3">
+    <div class="card"><span class="tag">Americas</span><h3 class="serif">US · Canada · LatAm</h3>
+      <p>US GAAP / SEC, quarterly 10-Q/10-K, high free float, buyback &amp; litigation culture. Benchmarks
+        S&amp;P 500 / Russell.</p></div>
+    <div class="card"><span class="tag">Europe &amp; UK</span><h3 class="serif">IFRS heartland</h3>
+      <p>IFRS, ESMA + national regulators, <b>semi-annual</b> reporting norm, dividend focus. STOXX / FTSE / DAX /
+        CAC.</p></div>
+    <div class="card"><span class="tag">Asia ex-Japan</span><h3 class="serif">India · Greater China · ASEAN</h3>
+      <p>Mixed regimes (Ind-AS, HKFRS, China ASBE); <b>promoter / family / state ownership</b> and related-party risk
+        are central. SEBI / HKEX / CSRC.</p></div>
+    <div class="card"><span class="tag">Japan</span><h3 class="serif">JPX / TSE</h3>
+      <p>J-GAAP or IFRS, cross-holdings, cash-rich balance sheets, the <b>ROE / governance-reform</b> agenda.
+        TOPIX / Nikkei.</p></div>
+    <div class="card"><span class="tag">Australia &amp; NZ</span><h3 class="serif">ASX / NZX</h3>
+      <p>IFRS, ASIC/ASX continuous disclosure, semi-annual, resources weighting and <b>franking credits</b>.
+        ASX 200.</p></div>
+    <div class="card"><span class="tag">Emerging / Frontier</span><h3 class="serif">Cross-listed &amp; local</h3>
+      <p>Local GAAP, <b>FX &amp; sovereign risk</b>, thinner disclosure, ADR/GDR cross-listings — provenance and
+        liquidity flags carry extra weight.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ DEPTH LADDER ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">04</span>
     <div class="txt"><span class="eyebrow">The dial you asked for</span>
       <h2 class="serif">Levels of research depth</h2></div>
   </div>
@@ -407,7 +512,7 @@
 <!-- ============ ARCHITECTURE ============ -->
 <section><div class="wrap">
   <div class="sec-head">
-    <span class="num">04</span>
+    <span class="num">05</span>
     <div class="txt"><span class="eyebrow">How it thinks</span>
       <h2 class="serif">Agent architecture</h2></div>
   </div>
@@ -415,8 +520,8 @@
     picks the depth, orchestrates tools, argues with itself, remembers the name, and only then writes. Six stages.</p>
 
   <div class="flow" style="margin-top:26px">
-    <div class="stage"><div class="n">01 · Plan</div><h3 class="serif">Research planner</h3>
-      <p>Reads the request, sets the depth tier, decomposes into a task list, and picks tools.</p></div>
+    <div class="stage"><div class="n">01 · Plan</div><h3 class="serif">Mandate &amp; planner</h3>
+      <p>Fixes the mandate — side × market × depth — then decomposes into a task list and picks tools.</p></div>
     <div class="arrow">→</div>
     <div class="stage"><div class="n">02 · Gather</div><h3 class="serif">Tool & data layer</h3>
       <p>Providers + the nine lenses + modelling & valuation engines + filing/transcript retrieval.</p></div>
@@ -452,13 +557,15 @@
     <div class="lens new"><div class="ln">NEW · B</div><div class="nm">Valuation triangulation</div><div class="q">DCF · SOTP · multiples</div></div>
     <div class="lens new"><div class="ln">NEW · C</div><div class="nm">Consensus & estimates</div><div class="q">variant perception</div></div>
     <div class="lens new"><div class="ln">NEW · D</div><div class="nm">Coverage memory</div><div class="q">track the call</div></div>
+    <div class="lens new"><div class="ln">NEW · E</div><div class="nm">Mandate router</div><div class="q">side × market × depth</div></div>
+    <div class="lens new"><div class="ln">NEW · F</div><div class="nm">Market profiles</div><div class="q">any geography</div></div>
   </div>
 </div></section>
 
 <!-- ============ PRODUCTS ============ -->
 <section><div class="wrap">
   <div class="sec-head">
-    <span class="num">05</span>
+    <span class="num">06</span>
     <div class="txt"><span class="eyebrow">What it hands you</span>
       <h2 class="serif">Output products</h2></div>
   </div>
@@ -481,7 +588,7 @@
 <!-- ============ BUILD PHASES ============ -->
 <section><div class="wrap">
   <div class="sec-head">
-    <span class="num">06</span>
+    <span class="num">07</span>
     <div class="txt"><span class="eyebrow">How we get there</span>
       <h2 class="serif">Build sequence</h2></div>
   </div>
@@ -489,9 +596,10 @@
     reveal at the end.</p>
   <div style="margin-top:24px">
     <div class="phase"><div class="p"><span class="pn">1</span><span class="pl">wrap</span></div>
-      <div class="pc"><h3>Agent shell over the existing engine</h3>
-        <p>A planner + tool-runner that wraps the nine lenses as tools, plus the product renderer.</p>
-        <div class="chips"><span class="chip">planner + tool loop</span><span class="chip">lens-as-tool adapters</span><span class="chip out">delivers L0–L2</span></div></div></div>
+      <div class="pc"><h3>Agent shell + mandate over the existing engine</h3>
+        <p>A mandate router (side × market × depth) and planner that wraps the nine lenses as tools, plus the
+          product renderer.</p>
+        <div class="chips"><span class="chip">mandate router</span><span class="chip">market profiles</span><span class="chip">planner + tool loop</span><span class="chip">lens-as-tool adapters</span><span class="chip out">delivers L0–L2</span></div></div></div>
     <div class="phase"><div class="p"><span class="pn">2</span><span class="pl">model</span></div>
       <div class="pc"><h3>Modelling & valuation triangulation</h3>
         <p>Driver-based 3-statement engine + DCF/SOTP/multiples reconciliation + scenario tree.</p>
@@ -510,7 +618,7 @@
 <!-- ============ GUARDRAILS ============ -->
 <section><div class="wrap">
   <div class="sec-head">
-    <span class="num">07</span>
+    <span class="num">08</span>
     <div class="txt"><span class="eyebrow">Non-negotiables</span>
       <h2 class="serif">Discipline & guardrails</h2></div>
   </div>
