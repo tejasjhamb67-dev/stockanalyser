@@ -37,6 +37,7 @@ def render_html(out) -> str:
         _hero(out),
         _market_strip(m),
         _call_banner(out),
+        _analyst_read(out),
         _valuation(out),
         _estimates(out),
         _living_coverage(out),
@@ -111,6 +112,14 @@ def _call_banner(out):
         bits.append("<div class='warn-banner'>⚠ " +
                     " ".join(escape(w) for w in out.warnings) + "</div>")
     return f"<section class='banners'>{''.join(bits)}</section>" if bits else ""
+
+
+def _analyst_read(out):
+    if not getattr(out, "narrative", ""):
+        return ""
+    return (f"<section class='card analyst'><h2>Analyst read "
+            f"<span class='star'>{escape(out.mandate.side.label)}</span></h2>"
+            f"<p>{escape(out.narrative)}</p></section>")
 
 
 def _valuation(out):
@@ -367,6 +376,7 @@ td{padding:6px 8px;border-bottom:1px solid var(--line)}
 .scen .scn{text-transform:capitalize;font-weight:600}
 .wtgt{margin-top:12px;font-size:14px} .wtgt b{font-size:15px}
 .vx{font-size:12.5px;color:var(--muted);margin-top:4px}
+.analyst p{font-size:14.5px;line-height:1.65;margin:0}
 .variant{margin-top:10px;font-size:13.5px;padding:8px 12px;border-left:3px solid var(--brass);
   background:color-mix(in srgb,var(--brass) 8%,transparent);border-radius:0 8px 8px 0}
 .note{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic}

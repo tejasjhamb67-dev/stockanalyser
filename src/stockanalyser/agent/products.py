@@ -12,6 +12,7 @@ any constructive call, encoding the blueprint's "forensics can veto a rating" ru
 """
 from __future__ import annotations
 
+import textwrap
 from dataclasses import dataclass
 
 from ..models import LensResult, Verdict
@@ -46,6 +47,18 @@ _BUY_STANCE = {
     Verdict.STRONG_AVOID: ("Avoid / short candidate", "High"),
     Verdict.INSUFFICIENT: ("Pass — insufficient data", "—"),
 }
+
+
+def _analyst_read(narrative: str) -> list[str]:
+    """An 'Analyst read' block, prose wrapped to a readable width."""
+    if not narrative:
+        return []
+    out = [" Analyst read"]
+    for para in narrative.split("\n"):
+        for line in textwrap.wrap(para, width=76) or [""]:
+            out.append(f"   {line}")
+    out.append("")
+    return out
 
 
 def _forensic_gate(lenses: dict[str, LensResult]) -> str:
@@ -134,6 +147,7 @@ def render_product(
     plan_notes: list[str],
     warnings: list[str],
     appraisal=None,
+    narrative: str = "",
 ) -> str:
     comp = f"{composite:.1f}/100" if composite is not None else "n/a"
     L: list[str] = []
@@ -153,6 +167,9 @@ def render_product(
     if call.gate == "fail":
         L.append(" ⚠ Forensic gate FAILED — constructive calls are capped.")
     L.append("")
+
+    if product in ("tearsheet", "deepdive"):
+        L.extend(_analyst_read(narrative))
 
     if product in ("screen", "tearsheet", "deepdive"):
         L.append(" Lenses")
@@ -267,6 +284,7 @@ def render_initiation(
     bull: list[str], bear: list[str], monitor: list[str],
     appraisal=None, consensus=None, catalysts=None, coverage_note: str = "",
     plan_notes: list[str] | None = None, warnings: list[str] | None = None,
+    narrative: str = "",
 ) -> str:
     plan_notes = plan_notes or []
     warnings = warnings or []
@@ -298,6 +316,8 @@ def render_initiation(
     if call.gate == "fail":
         L.append(" ⚠ Forensic gate FAILED — constructive calls are capped.")
     L.append("")
+
+    L.extend(_analyst_read(narrative))
 
     # 1 · industry & positioning primer
     L.append(" 1 · Industry & positioning")
@@ -372,7 +392,7 @@ def render_coverage(
     composite: float | None, appraisal=None, coverage_note: str = "",
     review=None, preview=None, revisions=None, tracker=None,
     monitor: list[str] | None = None, plan_notes: list[str] | None = None,
-    warnings: list[str] | None = None,
+    warnings: list[str] | None = None, narrative: str = "",
 ) -> str:
     monitor = monitor or []
     plan_notes = plan_notes or []
@@ -398,6 +418,8 @@ def render_coverage(
     if call.gate == "fail":
         L.append(" ⚠ Forensic gate FAILED — constructive calls are capped.")
     L.append("")
+
+    L.extend(_analyst_read(narrative))
 
     if tracker and tracker.rating_trajectory:
         traj = " → ".join(f"{d}:{r}" for d, r in tracker.rating_trajectory[-4:])

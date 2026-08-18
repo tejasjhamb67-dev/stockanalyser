@@ -25,6 +25,7 @@ from .mandate import Depth, Mandate, MandateRouter, Side
 from .markets import MarketProfile, PROFILES, infer_profile
 from .memory import CoverageEntry, CoverageMemory, coverage_note
 from .modeling import Assumptions, Projection, build_projection, derive_assumptions
+from .narrative import build_narrative
 from .planner import ResearchPlan, plan_research
 from .products import Call, decide_call
 from .render_html import render_html
@@ -44,5 +45,5 @@ __all__ = [
     "EarningsReview", "EarningsPreview", "RevisionLine", "ThesisTracker",
     "earnings_review", "earnings_preview", "estimate_revisions", "thesis_tracker",
     "UniverseRow", "rank_universe", "render_conviction_list",
-    "render_html",
+    "render_html", "build_narrative",
 ]

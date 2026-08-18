@@ -27,6 +27,7 @@ from .coverage import (
 )
 from .mandate import Depth, Mandate, MandateRouter, Side
 from .memory import CoverageEntry, CoverageMemory, coverage_note, now_date
+from .narrative import build_narrative
 from .planner import ResearchPlan, plan_research
 from .products import Call
 from .tools import run_tools
@@ -51,6 +52,7 @@ class ResearchOutput:
     preview: object | None = None           # L5: EarningsPreview
     revisions: list = field(default_factory=list)   # L5: list[RevisionLine]
     tracker: object | None = None           # L5: ThesisTracker
+    narrative: str = ""                      # the analyst read (prose)
     bull_thesis: list[str] = field(default_factory=list)
     bear_thesis: list[str] = field(default_factory=list)
     monitorables: list[str] = field(default_factory=list)
@@ -124,38 +126,19 @@ def research(
 
     review = preview = tracker = None
     revisions: list = []
-    if plan.product == "initiation":
-        rendered = products.render_initiation(
-            mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
-            composite=composite, verdict=verdict, call=call, bull=bull, bear=bear,
-            monitor=monitor, appraisal=appraisal, consensus=consensus,
-            catalysts=catalysts, coverage_note=note, plan_notes=plan.notes,
-            warnings=warnings)
-    elif plan.product == "coverage":
+    if plan.product == "coverage":
         review = earnings_review(data.fundamentals)
         preview = earnings_preview(consensus)
         revisions = estimate_revisions(cov.prev, consensus)
         tracker = thesis_tracker(cov.history, cov.entry, cov.prev, monitor)
-        rendered = products.render_coverage(
-            mandate=mandate, company=company, generated_at=generated_at, call=call,
-            verdict=verdict, composite=composite, appraisal=appraisal,
-            coverage_note=note, review=review, preview=preview, revisions=revisions,
-            tracker=tracker, monitor=monitor, plan_notes=plan.notes, warnings=warnings)
-    else:
-        rendered = products.render_product(
-            mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
-            composite=composite, verdict=verdict, bull=bull, bear=bear, monitor=monitor,
-            call=call, product=plan.product, plan_notes=plan.notes, warnings=warnings,
-            appraisal=appraisal,
-        )
 
-    return ResearchOutput(
+    out = ResearchOutput(
         mandate=mandate, company=company, generated_at=generated_at, plan=plan,
         lenses=lenses, composite_score=composite, verdict=verdict, call=call,
         appraisal=appraisal, consensus=consensus, catalysts=catalysts or [],
         coverage_note=note, review=review, preview=preview, revisions=revisions,
         tracker=tracker,
-        bull_thesis=bull, bear_thesis=bear, monitorables=monitor, product=rendered,
+        bull_thesis=bull, bear_thesis=bear, monitorables=monitor,
         data_sources={
             "prices": data.prices.source if data.prices else "n/a",
             "fundamentals": data.fundamentals.source if data.fundamentals else "n/a",
@@ -163,6 +146,32 @@ def research(
         },
         warnings=warnings,
     )
+
+    # the analyst read — deterministic (offline) or LLM-enhanced when a key is present
+    if plan.product in ("tearsheet", "deepdive", "initiation", "coverage"):
+        out.narrative = build_narrative(out, use_llm=config.use_llm)
+
+    if plan.product == "initiation":
+        out.product = products.render_initiation(
+            mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
+            composite=composite, verdict=verdict, call=call, bull=bull, bear=bear,
+            monitor=monitor, appraisal=appraisal, consensus=consensus,
+            catalysts=catalysts, coverage_note=note, plan_notes=plan.notes,
+            warnings=warnings, narrative=out.narrative)
+    elif plan.product == "coverage":
+        out.product = products.render_coverage(
+            mandate=mandate, company=company, generated_at=generated_at, call=call,
+            verdict=verdict, composite=composite, appraisal=appraisal,
+            coverage_note=note, review=review, preview=preview, revisions=revisions,
+            tracker=tracker, monitor=monitor, plan_notes=plan.notes, warnings=warnings,
+            narrative=out.narrative)
+    else:
+        out.product = products.render_product(
+            mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
+            composite=composite, verdict=verdict, bull=bull, bear=bear, monitor=monitor,
+            call=call, product=plan.product, plan_notes=plan.notes, warnings=warnings,
+            appraisal=appraisal, narrative=out.narrative)
+    return out
 
 
 @dataclass

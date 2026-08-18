@@ -186,6 +186,11 @@ With `anthropic` installed and `ANTHROPIC_API_KEY` set, the analyst write-up is 
 by Claude from the lens evidence. Without it, a deterministic synthesiser writes the note.
 Either way the numbers come only from the analysis engine.
 
+The **research agent** carries its own mandate-aware *analyst read* on every L2+ product
+(terminal and HTML): a tight, side-appropriate note that reconciles the business-quality
+composite with the price target. It's LLM-written when a key is present and deterministic
+otherwise — and it never invents a number.
+
 ## Design notes
 
 - **Pluggable & defensive** — every lens degrades to "insufficient data" instead of
