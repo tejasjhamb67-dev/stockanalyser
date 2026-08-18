@@ -1,0 +1,663 @@
+<title>Equity Research Agent Blueprint</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --paper:#F4F6F8; --surface:#FFFFFF; --surface-2:#EDF1F4;
+    --ink:#111A24; --ink-soft:#44525F; --ink-faint:#7B8794;
+    --line:#D7DDE4; --line-soft:#E7EBEF;
+    --accent:#0F5568; --accent-deep:#0A3D4B; --accent-soft:#E1EDF0;
+    --brass:#8F6A1E; --brass-soft:#F0E7CF;
+    --bull:#1C7A57; --bear:#B0402C; --amber:#A9761A;
+    --shadow:0 1px 2px rgba(17,26,36,.04),0 6px 22px rgba(17,26,36,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B1017; --surface:#121A23; --surface-2:#182330;
+      --ink:#E7ECF2; --ink-soft:#A6B1BD; --ink-faint:#6C7986;
+      --line:#26313D; --line-soft:#1D2833;
+      --accent:#4FA8BF; --accent-deep:#7CC4D6; --accent-soft:#123039;
+      --brass:#C79A3E; --brass-soft:#2A2415;
+      --bull:#3FA37B; --bear:#D0654E; --amber:#D2A24A;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.34);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B1017; --surface:#121A23; --surface-2:#182330;
+    --ink:#E7ECF2; --ink-soft:#A6B1BD; --ink-faint:#6C7986;
+    --line:#26313D; --line-soft:#1D2833;
+    --accent:#4FA8BF; --accent-deep:#7CC4D6; --accent-soft:#123039;
+    --brass:#C79A3E; --brass-soft:#2A2415;
+    --bull:#3FA37B; --bear:#D0654E; --amber:#D2A24A;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.34);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:17px; line-height:1.62; letter-spacing:.005em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .serif{font-family:Georgia,"Iowan Old Style","Times New Roman",serif}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+
+  .wrap{max-width:1060px;margin:0 auto;padding:0 26px}
+  section{padding:52px 0}
+  section+section{border-top:1px solid var(--line-soft)}
+
+  h1,h2,h3{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;text-wrap:balance;line-height:1.15;margin:0}
+  h2{font-size:clamp(1.5rem,3.2vw,2.15rem);letter-spacing:-.01em}
+  h3{font-size:1.16rem;letter-spacing:-.005em}
+  p{margin:0 0 1rem}
+  .lede{font-size:1.12rem;color:var(--ink-soft);max-width:64ch}
+  .eyebrow{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:26px}
+  .sec-head .num{font-family:ui-monospace,Menlo,monospace;font-size:.8rem;color:var(--ink-faint);
+    border:1px solid var(--line);border-radius:4px;padding:2px 8px;flex:none}
+  .sec-head .txt .eyebrow{display:block;margin-bottom:6px}
+
+  /* ---- Masthead ---- */
+  .mast{background:var(--surface);border-bottom:2px solid var(--ink)}
+  .mast .rule{height:4px;background:linear-gradient(90deg,var(--accent) 0 62%,var(--brass) 62% 100%)}
+  .mast-inner{padding:40px 0 34px}
+  .tape{display:flex;flex-wrap:wrap;gap:10px 20px;font-family:ui-monospace,Menlo,monospace;
+    font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);
+    border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:26px}
+  .tape b{color:var(--ink-soft);font-weight:600}
+  .tape .sep{color:var(--line)}
+  h1.title{font-size:clamp(2.1rem,6vw,3.55rem);letter-spacing:-.02em;margin:0 0 14px}
+  h1.title .thin{color:var(--ink-faint);font-style:italic}
+  .subtitle{font-size:1.18rem;color:var(--ink-soft);max-width:60ch;margin:0}
+  .mast-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:30px}
+  .mast-meta div{background:var(--surface);padding:13px 16px}
+  .mast-meta .k{font-family:ui-monospace,Menlo,monospace;font-size:.66rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px}
+  .mast-meta .v{font-weight:600;font-size:.95rem}
+
+  /* ---- generic cards ---- */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 20px;box-shadow:var(--shadow)}
+  .card h3{margin-bottom:7px}
+  .card p{margin:0;font-size:.95rem;color:var(--ink-soft)}
+  .card .tag{font-family:ui-monospace,Menlo,monospace;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:9px;display:block}
+
+  .diff{border-left:3px solid var(--brass)}
+  .diff .tag{color:var(--brass)}
+
+  /* ---- mandate ---- */
+  .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:24px 0 30px}
+  .axis{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 18px;
+    box-shadow:var(--shadow);border-top:3px solid var(--accent)}
+  .axis.two{border-top-color:var(--brass)}
+  .axis .ax{font-family:ui-monospace,Menlo,monospace;font-size:.64rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600}
+  .axis.two .ax{color:var(--brass)}
+  .axis h3{font-size:1.08rem;margin:7px 0 5px}
+  .axis p{margin:0;font-size:.9rem;color:var(--ink-soft)}
+  .vs-scroll{overflow-x:auto;border-radius:11px;box-shadow:var(--shadow)}
+  .vs{min-width:620px;background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .vs-row{display:grid;grid-template-columns:150px 1fr 1fr;border-top:1px solid var(--line-soft)}
+  .vs-row:first-child{border-top:0}
+  .vs-row>div{padding:13px 16px;font-size:.9rem;color:var(--ink-soft)}
+  .vs-row .attr{background:var(--surface-2);color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace;
+    font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;display:flex;align-items:center}
+  .vs-row .sv{border-right:1px solid var(--line-soft)}
+  .vs-row .sv b,.vs-row .bv b{color:var(--ink);font-weight:600}
+  .vs-row.head>div{font-family:-apple-system,sans-serif;font-weight:700;font-size:.82rem;
+    letter-spacing:.04em;text-transform:uppercase;color:#fff;padding:14px 16px}
+  .vs-row.head .attr{background:var(--ink);color:#fff}
+  .vs-row.head .sv{background:var(--accent);color:#fff}
+  .vs-row.head .bv{background:var(--brass);color:#fff}
+
+  /* ---- capability rows ---- */
+  .cap{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+  .cap-row{display:grid;grid-template-columns:190px 1fr;gap:0;border-top:1px solid var(--line-soft)}
+  .cap-row:first-child{border-top:0}
+  .cap-row .lbl{padding:16px 18px;background:var(--surface-2);border-right:1px solid var(--line-soft);
+    font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:9px}
+  .cap-row .lbl .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+  .cap-row .body{padding:16px 18px;font-size:.94rem;color:var(--ink-soft)}
+  .cap-row .body b{color:var(--ink);font-weight:600}
+
+  /* ---- depth ladder ---- */
+  .ladder{display:flex;flex-direction:column;gap:14px}
+  .tier{display:grid;grid-template-columns:96px 1fr;background:var(--surface);
+    border:1px solid var(--line);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}
+  .tier .rail{padding:18px 14px;color:#fff;display:flex;flex-direction:column;gap:4px;justify-content:center;align-items:center;text-align:center}
+  .tier .rail .code{font-family:ui-monospace,Menlo,monospace;font-size:1.5rem;font-weight:700;line-height:1}
+  .tier .rail .rt{font-family:ui-monospace,Menlo,monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+  .tier .rail.d0{background:#5B7480} .tier .rail.d1{background:#3E7C88}
+  .tier .rail.d2{background:#1E6474} .tier .rail.d3{background:#14556A}
+  .tier .rail.d4{background:#0C3F52} .tier .rail.d5{background:#7A5A16}
+  .tier .content{padding:16px 20px}
+  .tier .content .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;margin-bottom:8px}
+  .tier .content h3{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:1.08rem;font-weight:700}
+  .tier .content .when{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;letter-spacing:.06em;
+    color:var(--ink-faint);text-transform:uppercase;margin-left:auto}
+  .tier .content .q{color:var(--ink-soft);font-size:.94rem;margin:0 0 10px}
+  .tier .content .q em{color:var(--accent);font-style:normal;font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:5px;padding:3px 8px;color:var(--ink-soft)}
+  .chip.out{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .chip.done{border-color:var(--bull);color:var(--bull);background:transparent;font-weight:600}
+
+  /* ---- pipeline / architecture ---- */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+  .stage{flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:15px 16px;box-shadow:var(--shadow);position:relative}
+  .stage .n{font-family:ui-monospace,Menlo,monospace;font-size:.66rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--brass);font-weight:600;margin-bottom:6px}
+  .stage h3{font-size:1rem;margin-bottom:5px}
+  .stage p{font-size:.86rem;color:var(--ink-soft);margin:0}
+  .arrow{align-self:center;color:var(--ink-faint);font-size:1.1rem;flex:none}
+
+  .lenses{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:8px}
+  .lens{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 13px}
+  .lens .ln{font-family:ui-monospace,Menlo,monospace;font-size:.64rem;color:var(--ink-faint);letter-spacing:.1em}
+  .lens .nm{font-weight:600;font-size:.9rem;margin:2px 0 3px}
+  .lens .q{font-size:.8rem;color:var(--ink-soft);font-style:italic}
+  .lens.new{border-color:var(--brass);background:linear-gradient(0deg,var(--brass-soft),transparent)}
+  .lens.new .ln{color:var(--brass);font-weight:600}
+
+  /* ---- phases ---- */
+  .phase{display:grid;grid-template-columns:64px 1fr;gap:0;background:var(--surface);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
+  .phase .p{background:var(--accent);color:#fff;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;font-family:ui-monospace,Menlo,monospace;padding:14px 0}
+  .phase .p .pn{font-size:1.3rem;font-weight:700;line-height:1}
+  .phase .p .pl{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-top:3px}
+  .phase .pc{padding:16px 20px}
+  .phase .pc h3{font-family:-apple-system,sans-serif;font-size:1.02rem;font-weight:700;margin-bottom:5px}
+  .phase .pc p{font-size:.9rem;color:var(--ink-soft);margin:0 0 8px}
+
+  /* ---- guardrails ---- */
+  .rails{border-left:3px solid var(--bear)}
+  .rails .tag{color:var(--bear)}
+
+  ul.tight{margin:6px 0 0;padding-left:18px}
+  ul.tight li{margin:3px 0;font-size:.92rem;color:var(--ink-soft)}
+  ul.tight li b{color:var(--ink);font-weight:600}
+
+  .callout{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+    padding:20px 22px;margin-top:8px}
+  .callout p{margin:0;color:var(--ink);font-size:.98rem}
+  .callout p+p{margin-top:.6rem}
+
+  footer{padding:40px 0 60px;color:var(--ink-faint);font-size:.85rem}
+  footer .disc{border-top:1px solid var(--line);padding-top:20px}
+  a{color:var(--accent);text-underline-offset:2px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  @media (max-width:640px){
+    body{font-size:16px}
+    .cap-row{grid-template-columns:1fr}
+    .cap-row .lbl{border-right:0;border-bottom:1px solid var(--line-soft)}
+    .tier{grid-template-columns:72px 1fr}
+    .phase{grid-template-columns:52px 1fr}
+  }
+</style>
+
+<header class="mast">
+  <div class="rule"></div>
+  <div class="wrap mast-inner">
+    <div class="tape">
+      <span><b>EQUITY RESEARCH</b> · AGENT ARCHITECTURE</span>
+      <span class="sep">|</span>
+      <span>BLUEPRINT v0.4 · L0–L5 SHIPPED</span>
+      <span class="sep">|</span>
+      <span>BUILT ON <b>stockanalyser</b> — NINE-LENS ENGINE</span>
+      <span class="sep">|</span>
+      <span>2026-08-17</span>
+    </div>
+    <span class="eyebrow">Institutional-grade research, autonomously</span>
+    <h1 class="title serif">The Analyst <span class="thin">as an Agent</span></h1>
+    <p class="subtitle">A design for a research agent that reasons the way a senior analyst does — buy-side or
+      sell-side, in any market — forming a differentiated view, defending it against consensus, pricing it in three
+      scenarios, and revisiting it every quarter. Not a chatbot that summarises a screener.</p>
+    <div class="mast-meta">
+      <div><div class="k">Target standard</div><div class="v">Bulge-bracket initiation quality</div></div>
+      <div><div class="k">Mandate</div><div class="v">Sell-side · buy-side · any market</div></div>
+      <div><div class="k">Depth range</div><div class="v">L0 snapshot → L5 living coverage</div></div>
+      <div><div class="k">Substrate</div><div class="v">Existing 9-lens engine</div></div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ WHAT GS-LEVEL MEANS ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">00</span>
+    <div class="txt"><span class="eyebrow">The bar we are clearing</span>
+      <h2 class="serif">What "Goldman-level" actually means</h2></div>
+  </div>
+  <p class="lede">Retail tools describe a stock. Institutional research takes a <b>position</b> — an out-of-consensus,
+    falsifiable, priced, and accountable view. Six things separate the two, and every one of them is a capability the
+    agent must own, not decorate.</p>
+  <div class="grid g3" style="margin-top:26px">
+    <div class="card diff"><span class="tag">Differentiated view</span><h3 class="serif">Variant perception</h3>
+      <p>A thesis is only worth writing where it <em>differs</em> from the Street. The agent explicitly models
+        consensus and states where — and <b>why</b> — it disagrees. No variance, no note.</p></div>
+    <div class="card diff"><span class="tag">Rigour</span><h3 class="serif">A real model underneath</h3>
+      <p>Driver-based, three-statement forecasts that tie out. Revenue built bottom-up from units × price × mix, not a
+        growth-rate guess. The price target is an <b>output</b> of the model, not a vibe.</p></div>
+    <div class="card diff"><span class="tag">Triangulation</span><h3 class="serif">Valued three ways</h3>
+      <p>DCF, sum-of-the-parts, and peer multiples must roughly agree — and when they don't, the <b>gap is the
+        insight</b>. Every target carries a bull / base / bear tree with probabilities.</p></div>
+    <div class="card diff"><span class="tag">Evidence</span><h3 class="serif">Primary research</h3>
+      <p>Reads the actual 10-K / annual report and the concall transcript, cross-checks channel and alternative data,
+        and cites the <b>page and line</b> — never launders a secondary summary as fact.</p></div>
+    <div class="card diff"><span class="tag">Risk</span><h3 class="serif">Knows what kills the thesis</h3>
+      <p>Names the two or three <b>monitorables</b> that would flip the call, the factor and crowding exposure, and the
+        forensic red flags — before the market forces the question.</p></div>
+    <div class="card diff"><span class="tag">Accountability</span><h3 class="serif">A track record</h3>
+      <p>Every call is dated, priced, and scored against outcome. The agent's coverage memory means it can be
+        <b>wrong on the record</b> — and learn from the miss — the way a covering analyst is.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ CAPABILITY MAP ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">01</span>
+    <div class="txt"><span class="eyebrow">What it can do</span>
+      <h2 class="serif">Capability map</h2></div>
+  </div>
+  <p class="lede">Ten capability blocks. The first nine map onto the analytical lenses you already have; the rest are the
+    agentic layer that turns analysis into research.</p>
+  <div class="cap" style="margin-top:24px">
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Coverage & universe</div>
+      <div class="body">Maintain a <b>coverage list</b> with sector expertise and a curated comps universe; screen and
+        triage new names; decide which deserve depth.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Financial modelling</div>
+      <div class="body">Build and maintain <b>3-statement models</b> — driver-based revenue, margin bridges, working
+        capital, capex, debt schedules — with scenario and sensitivity toggles.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Valuation</div>
+      <div class="body">Two-stage <b>DCF</b>, <b>sum-of-the-parts</b>, residual income, and relative multiples;
+        reconciled into a scenario-weighted <b>12-month price target</b>.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Estimates & consensus</div>
+      <div class="body">Forecast quarterly/annual revenue, margins and EPS; compare to <b>Street consensus</b>; run
+        earnings <b>previews</b> and <b>reviews</b> with beat/miss attribution.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Thesis construction</div>
+      <div class="body">Assemble a <b>differentiated thesis</b>: variant perception, the key debates, the catalyst
+        calendar, and the falsifiers — a bull case and a bear case that both hold water.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Industry & thematic</div>
+      <div class="body"><b>TAM</b> sizing, value-chain and competitive-structure mapping, structural-vs-cyclical
+        framing, regulatory reads, and cross-sector thematic work.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Primary & alt-data</div>
+      <div class="body">Ingest <b>filings and transcripts</b> in full; fold in channel checks, expert-network notes,
+        and alternative data (card spend, web/app traffic, hiring, satellite) where available.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Forensic & quality</div>
+      <div class="body">Piotroski / Altman / Beneish, accruals and cash-vs-profit, related-party and pledging checks —
+        a <b>gate</b> the thesis must pass before a buy rating is allowed.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Risk & positioning</div>
+      <div class="body">Factor exposures, short interest, ownership and <b>crowdedness</b>, liquidity, and the
+        explicit downside scenario — how the position behaves when it's wrong.</div></div>
+    <div class="cap-row"><div class="lbl"><span class="dot"></span>Communication</div>
+      <div class="body">Produce the actual <b>products</b>: quick take, tearsheet, deep-dive, initiation note, earnings
+        flash, thematic — each in house voice, every claim sourced.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ KNOWLEDGE DOMAINS ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">02</span>
+    <div class="txt"><span class="eyebrow">What it must understand</span>
+      <h2 class="serif">Knowledge domains</h2></div>
+  </div>
+  <p class="lede">Capabilities are verbs; these are the nouns behind them — the body of understanding the agent draws on.
+    Sector fluency is where "generic finance bot" and "analyst" visibly diverge.</p>
+  <div class="grid g2" style="margin-top:24px">
+    <div class="card"><span class="tag">Foundations</span><h3 class="serif">Accounting & the statements</h3>
+      <p>GAAP / IFRS / Ind-AS, revenue recognition, leases and off-balance-sheet, one-offs vs recurring, how the three
+        statements articulate — and where numbers are massaged.</p></div>
+    <div class="card"><span class="tag">Foundations</span><h3 class="serif">Corporate finance & valuation theory</h3>
+      <p>WACC and CAPM, cost of capital, terminal value, the <b>ROIC-vs-WACC spread</b> as the engine of value
+        creation, capital allocation, and what actually drives a multiple.</p></div>
+    <div class="card"><span class="tag">The edge</span><h3 class="serif">Sector-specific KPIs & structure</h3>
+      <p>The metrics that matter <em>per industry</em> — banks (NIM, CASA, NPA, credit cost), SaaS (NRR, CAC payback,
+        Rule of 40), retail (SSSG, density), commodities (cost curve), pharma (pipeline, patent cliff), utilities
+        (rate base). Each sector is its own dialect.</p></div>
+    <div class="card"><span class="tag">Context</span><h3 class="serif">Macro & the cycle</h3>
+      <p>Rates, inflation, FX, credit and liquidity conditions, commodity cycles, and where a sector sits in its own
+        cycle — the top-down that reconciles with the bottom-up.</p></div>
+    <div class="card"><span class="tag">Context</span><h3 class="serif">Market structure & behaviour</h3>
+      <p>How flows, positioning, index events and ownership move price; consensus formation and the behavioural biases
+        that create the mispricings research exists to exploit.</p></div>
+    <div class="card"><span class="tag">Discipline</span><h3 class="serif">Governance, regulation & statistics</h3>
+      <p>SEBI / SEC disclosure regimes, board and promoter governance, related-party risk; and the quantitative
+        methods — regression, attribution, scenario/Monte-Carlo — to keep the reasoning honest.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ MANDATE ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">03</span>
+    <div class="txt"><span class="eyebrow">Set before any data is pulled</span>
+      <h2 class="serif">The research mandate</h2></div>
+  </div>
+  <p class="lede">Before the agent pulls a single datapoint it fixes three coordinates. Together they are the
+    <b>mandate</b> — and they reshape what gets researched, how it's framed, and what lands on the page. Same engine,
+    a different analyst each time.</p>
+
+  <div class="axes">
+    <div class="axis"><span class="ax">Axis 1 · Side</span><h3 class="serif">Sell-side or buy-side</h3>
+      <p>A recommendation for clients, or a capital-allocation decision for a book. Reframes the whole output.</p></div>
+    <div class="axis two"><span class="ax">Axis 2 · Market</span><h3 class="serif">Geography & regime</h3>
+      <p>Americas, Europe, Asia, Japan, Australia, EM — each a swappable accounting / regulatory / macro profile.</p></div>
+    <div class="axis"><span class="ax">Axis 3 · Depth</span><h3 class="serif">L0 → L5</h3>
+      <p>How far down to drill — snapshot to living coverage. The ladder in the next section.</p></div>
+  </div>
+
+  <h3 class="serif" style="margin:6px 0 4px">Axis 1 — the same facts, a different verdict</h3>
+  <p style="color:var(--ink-soft);max-width:64ch;font-size:.96rem;margin-bottom:16px">Sell-side and buy-side share
+    ~80% of the machinery — the same lenses, the same model. The mandate re-weights and re-frames the last mile: what
+    the note argues, how conviction is expressed, and which risks lead.</p>
+  <div class="vs-scroll"><div class="vs">
+    <div class="vs-row head"><div class="attr">Dimension</div><div class="sv">Sell-side</div><div class="bv">Buy-side</div></div>
+    <div class="vs-row"><div class="attr">Objective</div>
+      <div class="sv">A published <b>rating + price target</b> for clients to act on.</div>
+      <div class="bv">A <b>position decision</b> — own it, pass, or short — and how much.</div></div>
+    <div class="vs-row"><div class="attr">Frame</div>
+      <div class="sv">Relative to coverage &amp; benchmark (<b>Buy / Hold / Sell</b>).</div>
+      <div class="bv"><b>Absolute</b> risk/reward and fit within a portfolio.</div></div>
+    <div class="vs-row"><div class="attr">Core question</div>
+      <div class="sv">Is this a good stock to <b>recommend</b>, vs its peers?</div>
+      <div class="bv">Is this a good use of <b>capital, at this price, right now</b>?</div></div>
+    <div class="vs-row"><div class="attr">Emphasis</div>
+      <div class="sv">Coverage breadth, consensus positioning, defensible &amp; compliant.</div>
+      <div class="bv">Variant perception, <b>asymmetry, sizing, catalysts, entry/exit, liquidity</b>.</div></div>
+    <div class="vs-row"><div class="attr">Horizon</div>
+      <div class="sv">12-month target, maintained across quarters.</div>
+      <div class="bv">Whatever the thesis needs — event-driven to multi-year.</div></div>
+    <div class="vs-row"><div class="attr">Primary output</div>
+      <div class="sv">Initiation / update <b>note</b> for distribution.</div>
+      <div class="bv">Internal <b>investment memo / IC pitch</b> + position sheet.</div></div>
+    <div class="vs-row"><div class="attr">Success metric</div>
+      <div class="sv">Estimate accuracy, rating vs benchmark, client value.</div>
+      <div class="bv"><b>P&amp;L / IRR</b> of the actual position.</div></div>
+    <div class="vs-row"><div class="attr">Voice</div>
+      <div class="sv">Measured, disclosed, house view.</div>
+      <div class="bv">Blunt, decision-forcing, contrarian where warranted.</div></div>
+  </div></div>
+
+  <h3 class="serif" style="margin:34px 0 4px">Axis 2 — one engine, every market</h3>
+  <p style="color:var(--ink-soft);max-width:66ch;font-size:.96rem;margin-bottom:18px">Each geography is a swappable
+    <span class="mono" style="font-size:.85em">MarketProfile</span> carrying its accounting regime, regulator &amp;
+    disclosure cadence, currency/FX anchor, benchmark index, governance conventions and macro drivers. Selecting a
+    market re-parameterises every lens — the forensic lens hunts <b>promoter pledging</b> in Mumbai and <b>litigation
+    reserves</b> in New York: the same code, a different grind.</p>
+  <div class="grid g3">
+    <div class="card"><span class="tag">Americas</span><h3 class="serif">US · Canada · LatAm</h3>
+      <p>US GAAP / SEC, quarterly 10-Q/10-K, high free float, buyback &amp; litigation culture. Benchmarks
+        S&amp;P 500 / Russell.</p></div>
+    <div class="card"><span class="tag">Europe &amp; UK</span><h3 class="serif">IFRS heartland</h3>
+      <p>IFRS, ESMA + national regulators, <b>semi-annual</b> reporting norm, dividend focus. STOXX / FTSE / DAX /
+        CAC.</p></div>
+    <div class="card"><span class="tag">Asia ex-Japan</span><h3 class="serif">India · Greater China · ASEAN</h3>
+      <p>Mixed regimes (Ind-AS, HKFRS, China ASBE); <b>promoter / family / state ownership</b> and related-party risk
+        are central. SEBI / HKEX / CSRC.</p></div>
+    <div class="card"><span class="tag">Japan</span><h3 class="serif">JPX / TSE</h3>
+      <p>J-GAAP or IFRS, cross-holdings, cash-rich balance sheets, the <b>ROE / governance-reform</b> agenda.
+        TOPIX / Nikkei.</p></div>
+    <div class="card"><span class="tag">Australia &amp; NZ</span><h3 class="serif">ASX / NZX</h3>
+      <p>IFRS, ASIC/ASX continuous disclosure, semi-annual, resources weighting and <b>franking credits</b>.
+        ASX 200.</p></div>
+    <div class="card"><span class="tag">Emerging / Frontier</span><h3 class="serif">Cross-listed &amp; local</h3>
+      <p>Local GAAP, <b>FX &amp; sovereign risk</b>, thinner disclosure, ADR/GDR cross-listings — provenance and
+        liquidity flags carry extra weight.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ DEPTH LADDER ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">04</span>
+    <div class="txt"><span class="eyebrow">The dial you asked for</span>
+      <h2 class="serif">Levels of research depth</h2></div>
+  </div>
+  <p class="lede">One agent, six depths. The user (or the agent's own triage) sets the level; each tier is a superset of
+    the one below, escalating in time, evidence, and product. All six are implemented today on bundled data — L0–L2 in
+    seconds, L3 adding the driver model &amp; triangulated valuation, L4 the initiation, L5 the maintenance note; a live
+    data provider lifts every tier off illustrative figures.</p>
+
+  <div class="ladder" style="margin-top:26px">
+    <div class="tier">
+      <div class="rail d0"><span class="code">L0</span><span class="rt">seconds</span></div>
+      <div class="content">
+        <div class="top"><h3>Snapshot · Quick Take</h3><span class="when">~10 sec · fully automated</span></div>
+        <p class="q">Answers: <em>what is this, and what does the tape say right now?</em></p>
+        <div class="chips">
+          <span class="chip">9-lens scorecard</span><span class="chip">composite verdict</span>
+          <span class="chip">spike attribution</span><span class="chip out">→ one-paragraph read</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <div class="rail d1"><span class="code">L1</span><span class="rt">minutes</span></div>
+      <div class="content">
+        <div class="top"><h3>Screen · Triage</h3><span class="when">~1 min · universe-scale</span></div>
+        <p class="q">Answers: <em>across a list, which names are worth real work?</em></p>
+        <div class="chips">
+          <span class="chip">quality + value + momentum screen</span><span class="chip">forensic gate</span>
+          <span class="chip">peer rank</span><span class="chip out">→ ranked shortlist + flags</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <div class="rail d2"><span class="code">L2</span><span class="rt">minutes</span></div>
+      <div class="content">
+        <div class="top"><h3>Company Brief · Tearsheet</h3><span class="when">~5 min · light model</span></div>
+        <p class="q">Answers: <em>what's the business, the debates, and roughly what's it worth?</em></p>
+        <div class="chips">
+          <span class="chip">business & segment map</span><span class="chip">key debates</span>
+          <span class="chip">relative valuation vs peers</span><span class="chip">rough estimates</span>
+          <span class="chip out">→ 1-page tearsheet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <div class="rail d3"><span class="code">L3</span><span class="rt">deep</span></div>
+      <div class="content">
+        <div class="top"><h3>Deep Dive · Thesis</h3><span class="when">longer · full model</span></div>
+        <p class="q">Answers: <em>what's my differentiated view, and what is it worth in three scenarios?</em></p>
+        <div class="chips">
+          <span class="chip">3-statement driver model</span><span class="chip">DCF + SOTP + multiples</span>
+          <span class="chip">bull/base/bear tree</span><span class="chip">variant vs consensus</span>
+          <span class="chip">catalyst calendar</span><span class="chip">forensic review</span>
+          <span class="chip out">→ deep-dive note + price target</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <div class="rail d4"><span class="code">L4</span><span class="rt">flagship</span></div>
+      <div class="content">
+        <div class="top"><h3>Initiation of Coverage</h3><span class="when">flagship · the Goldman product</span></div>
+        <p class="q">Answers: <em>the full institutional case — industry, company, view, rating, target, risks.</em></p>
+        <div class="chips">
+          <span class="chip">industry primer + TAM</span><span class="chip">value-chain & moat</span>
+          <span class="chip">rating + 12-mo target</span><span class="chip">scenario probabilities</span>
+          <span class="chip">ESG / governance</span><span class="chip">risks & what-would-change-it</span>
+          <span class="chip out">→ full initiation report</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier">
+      <div class="rail d5"><span class="code">L5</span><span class="rt">ongoing</span></div>
+      <div class="content">
+        <div class="top"><h3>Living Coverage · Maintenance</h3><span class="when">continuous · memory-backed</span></div>
+        <p class="q">Answers: <em>is the thesis still intact, and what changed this quarter?</em></p>
+        <div class="chips">
+          <span class="chip">earnings preview / review</span><span class="chip">estimate revisions</span>
+          <span class="chip">monitorable tracking</span><span class="chip">thesis-drift alerts</span>
+          <span class="chip">conviction management</span><span class="chip out">→ flashes + rating changes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">05</span>
+    <div class="txt"><span class="eyebrow">How it thinks</span>
+      <h2 class="serif">Agent architecture</h2></div>
+  </div>
+  <p class="lede">The difference between your current engine and an <em>agent</em> is a control loop: something that
+    picks the depth, orchestrates tools, argues with itself, remembers the name, and only then writes. Six stages.</p>
+
+  <div class="flow" style="margin-top:26px">
+    <div class="stage"><div class="n">01 · Plan</div><h3 class="serif">Mandate &amp; planner</h3>
+      <p>Fixes the mandate — side × market × depth — then decomposes into a task list and picks tools.</p></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="n">02 · Gather</div><h3 class="serif">Tool & data layer</h3>
+      <p>Providers + the nine lenses + modelling & valuation engines + filing/transcript retrieval.</p></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="n">03 · Reason</div><h3 class="serif">Thesis engine</h3>
+      <p>Forms the view, compares to consensus, weights scenarios, prices the target.</p></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="n">04 · Critique</div><h3 class="serif">Red-team & source gate</h3>
+      <p>Argues the bear case, checks every claim to a source, runs the forensic gate.</p></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="n">05 · Remember</div><h3 class="serif">Coverage memory</h3>
+      <p>Persists model, thesis, target and monitorables per name; tracks the call.</p></div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="n">06 · Write</div><h3 class="serif">Product renderer</h3>
+      <p>Emits the tier-appropriate note, tearsheet, or dashboard — in house voice.</p></div>
+  </div>
+
+  <h3 class="serif" style="margin:34px 0 4px">Mapping to what you already have</h3>
+  <p style="color:var(--ink-soft);max-width:64ch;font-size:.96rem">Nine of the tools in stage 02 exist today in
+    <span class="mono" style="font-size:.85em">src/stockanalyser/analysis/</span>. The agent adds four
+    <span style="color:var(--brass);font-weight:600">new</span> engines and the loop around them.</p>
+  <div class="lenses">
+    <div class="lens"><div class="ln">LENS 1</div><div class="nm">Technical</div><div class="q">what is price doing?</div></div>
+    <div class="lens"><div class="ln">LENS 2</div><div class="nm">Spike attribution</div><div class="q">why did it move?</div></div>
+    <div class="lens"><div class="ln">LENS 3</div><div class="nm">Fundamentals</div><div class="q">is the business good?</div></div>
+    <div class="lens"><div class="ln">LENS 4</div><div class="nm">Quality / forensic</div><div class="q">are numbers real?</div></div>
+    <div class="lens"><div class="ln">LENS 5</div><div class="nm">Valuation</div><div class="q">is it cheap?</div></div>
+    <div class="lens"><div class="ln">LENS 6</div><div class="nm">Earnings call</div><div class="q">what is mgmt saying?</div></div>
+    <div class="lens"><div class="ln">LENS 7</div><div class="nm">Governance</div><div class="q">can you trust them?</div></div>
+    <div class="lens"><div class="ln">LENS 8</div><div class="nm">Sector / top-down</div><div class="q">is the tide rising?</div></div>
+    <div class="lens"><div class="ln">LENS 9</div><div class="nm">Ownership & flows</div><div class="q">who's buying?</div></div>
+    <div class="lens new"><div class="ln">NEW · A</div><div class="nm">Modelling engine</div><div class="q">3-statement forecast</div></div>
+    <div class="lens new"><div class="ln">NEW · B</div><div class="nm">Valuation triangulation</div><div class="q">DCF · SOTP · multiples</div></div>
+    <div class="lens new"><div class="ln">NEW · C</div><div class="nm">Consensus & estimates</div><div class="q">variant perception</div></div>
+    <div class="lens new"><div class="ln">NEW · D</div><div class="nm">Coverage memory</div><div class="q">track the call</div></div>
+    <div class="lens new"><div class="ln">NEW · E</div><div class="nm">Mandate router</div><div class="q">side × market × depth</div></div>
+    <div class="lens new"><div class="ln">NEW · F</div><div class="nm">Market profiles</div><div class="q">any geography</div></div>
+  </div>
+</div></section>
+
+<!-- ============ PRODUCTS ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">06</span>
+    <div class="txt"><span class="eyebrow">What it hands you</span>
+      <h2 class="serif">Output products</h2></div>
+  </div>
+  <div class="grid g3" style="margin-top:22px">
+    <div class="card"><span class="tag">L0–L1</span><h3 class="serif">Quick take & screen</h3>
+      <p>The verdict paragraph and the ranked shortlist — the fast filter feeding everything above it.</p></div>
+    <div class="card"><span class="tag">L2</span><h3 class="serif">Tearsheet</h3>
+      <p>One page: business, debates, peer valuation, rough estimates, a provisional stance.</p></div>
+    <div class="card"><span class="tag">L3</span><h3 class="serif">Deep-dive note</h3>
+      <p>The model, the triangulated target, the variant view, the catalyst path — with the working shown.</p></div>
+    <div class="card"><span class="tag">L4</span><h3 class="serif">Initiation report</h3>
+      <p>Industry primer + company thesis + rating + 12-month target + risk section. The flagship.</p></div>
+    <div class="card"><span class="tag">L5</span><h3 class="serif">Earnings flash & revisions</h3>
+      <p>Same-day preview/review, estimate changes, and rating moves as the story develops.</p></div>
+    <div class="card"><span class="tag">Cross-name</span><h3 class="serif">Thematic & conviction list</h3>
+      <p>Sector pieces and a maintained best-ideas list rolled up across the coverage universe.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ BUILD PHASES ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">07</span>
+    <div class="txt"><span class="eyebrow">How we get there</span>
+      <h2 class="serif">Build sequence</h2></div>
+  </div>
+  <p class="lede">Each phase ships a usable depth tier, so there is a working analyst at every step — not one big-bang
+    reveal at the end.</p>
+  <div style="margin-top:24px">
+    <div class="phase"><div class="p"><span class="pn">1</span><span class="pl">wrap</span></div>
+      <div class="pc"><h3>Agent shell + mandate over the existing engine</h3>
+        <p>A mandate router (side × market × depth) and planner that wraps the nine lenses as tools, plus the
+          product renderer.</p>
+        <div class="chips"><span class="chip">mandate router</span><span class="chip">market profiles</span><span class="chip">planner + tool loop</span><span class="chip">lens-as-tool adapters</span><span class="chip done">✓ shipped — L0–L2</span></div></div></div>
+    <div class="phase"><div class="p"><span class="pn">2</span><span class="pl">model</span></div>
+      <div class="pc"><h3>Modelling & valuation triangulation</h3>
+        <p>Driver-based forecast (terminal-normalised capex) + DCF / exit-multiple / reverse-DCF
+          reconciliation + bull/base/bear tree, with the price target reconciling the rating.</p>
+        <div class="chips"><span class="chip">driver model</span><span class="chip">market-anchored WACC</span><span class="chip">scenario tree</span><span class="chip">reverse-DCF variant</span><span class="chip done">✓ shipped — L3</span></div></div></div>
+    <div class="phase"><div class="p"><span class="pn">3</span><span class="pl">cover</span></div>
+      <div class="pc"><h3>Consensus, memory & initiation</h3>
+        <p>Estimates layer (price-implied until a provider is wired), coverage memory that tracks
+          the call across runs, catalyst calendar, and the full initiation report.</p>
+        <div class="chips"><span class="chip">estimates & variant</span><span class="chip">coverage memory</span><span class="chip">catalyst calendar</span><span class="chip done">✓ shipped — L4</span></div></div></div>
+    <div class="phase"><div class="p"><span class="pn">4</span><span class="pl">live</span></div>
+      <div class="pc"><h3>Living coverage, conviction & live data</h3>
+        <p>Earnings review/preview, estimate revisions across runs, thesis tracking against the
+          monitorables, and a universe-level conviction list — plus a wired <b>yfinance</b> feed
+          (prices + full fundamentals across global exchanges) that lifts every tier onto real
+          data, with market &amp; WACC inferred from the listing. Transcript &amp; alt-data ingestion
+          is the remaining enrichment.</p>
+        <div class="chips"><span class="chip">earnings review</span><span class="chip">estimate revisions</span><span class="chip">conviction list</span><span class="chip">live yfinance feed</span><span class="chip done">✓ shipped — L5</span></div></div></div>
+  </div>
+</div></section>
+
+<!-- ============ GUARDRAILS ============ -->
+<section><div class="wrap">
+  <div class="sec-head">
+    <span class="num">08</span>
+    <div class="txt"><span class="eyebrow">Non-negotiables</span>
+      <h2 class="serif">Discipline & guardrails</h2></div>
+  </div>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card rails"><span class="tag">Honesty</span><h3 class="serif">Insufficient evidence beats invention</h3>
+      <p>Inherits the engine's rule: a lens with missing data says so; the agent never fabricates a number, a source,
+        or a channel check. Confidence is stated, not implied.</p></div>
+    <div class="card rails"><span class="tag">Provenance</span><h3 class="serif">Every figure carries its source</h3>
+      <p>Filing page, transcript line, provider, or "illustrative snapshot." A claim without a traceable source doesn't
+        enter the note.</p></div>
+    <div class="card rails"><span class="tag">Gate</span><h3 class="serif">Forensics can veto a rating</h3>
+      <p>A Beneish/accruals/pledging red flag caps the rating regardless of how cheap or strong the name looks — the
+        value-trap defence, enforced.</p></div>
+    <div class="card rails"><span class="tag">Boundary</span><h3 class="serif">Decision support, not advice</h3>
+      <p>It analyses; it does not place orders and it is not investment advice. Real decisions are verified against
+        primary filings — and the product says so on every page.</p></div>
+  </div>
+
+  <div class="callout" style="margin-top:22px">
+    <p><b>The one line that defines the whole thing:</b> a Goldman-level note is not a longer summary — it is a
+      <em>falsifiable, priced, sourced disagreement with the consensus, that its author is accountable for.</em></p>
+    <p>Everything in this blueprint exists to let the agent produce exactly that, at whichever of the six depths you dial in.</p>
+  </div>
+</div></section>
+
+</main>
+
+<footer><div class="wrap">
+  <div class="disc">
+    <p><b>Equity Research Agent — Blueprint v0.1.</b> Design document for a research agent layered on the existing
+      <span class="mono">stockanalyser</span> nine-lens engine. Capability, knowledge, and depth model for review before
+      implementation. Not investment advice.</p>
+  </div>
+</div></footer>

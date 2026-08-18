@@ -83,6 +83,61 @@ def cmd_analyse(args):
     return 0
 
 
+def cmd_research(args):
+    from .agent import research
+    from .agent.core import CompanyNotFound as _NF  # re-exported build error
+    cfg = Config.default()
+    cfg.provider = args.provider
+    cfg.use_llm = not args.no_llm
+    try:
+        out = research(args.query, side=args.side, depth=args.depth,
+                       market=args.market, config=cfg,
+                       coverage_store=args.coverage_store)
+    except _NF as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if not args.quiet:
+        print("\n" + out.product + "\n")
+    if args.html:
+        from .agent import render_html
+        outp = Path(args.html)
+        outp.write_text(render_html(out), encoding="utf-8")
+        print(f" dashboard → {outp.resolve()}")
+        if args.open:
+            webbrowser.open(outp.resolve().as_uri())
+    if args.json:
+        import json
+        payload = {
+            "mandate": {
+                "side": out.mandate.side.value,
+                "depth": out.mandate.depth.label,
+                "market": out.mandate.market.key,
+            },
+            "company": out.company.ticker,
+            "composite_score": out.composite_score,
+            "verdict": out.verdict.value,
+            "call": {"headline": out.call.headline, "conviction": out.call.conviction,
+                     "forensic_gate": out.call.gate},
+            "generated_at": out.generated_at,
+        }
+        Path(args.json).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(f" json → {Path(args.json).resolve()}")
+    return 0
+
+
+def cmd_conviction(args):
+    from .agent import rank_universe, render_conviction_list
+    from .agent.mandate import _coerce_side, Side
+    cfg = Config.default()
+    cfg.provider = args.provider
+    cfg.use_llm = False
+    rows = rank_universe(args.queries, side=args.side, market=args.market,
+                         depth=args.depth or "L3", config=cfg)
+    side = _coerce_side(args.side) if args.side else Side.SELL_SIDE
+    print("\n" + render_conviction_list(rows, side) + "\n")
+    return 0
+
+
 def cmd_list(args):
     for c in OfflineProvider().catalogue():
         print(f"  {c.symbol.ljust(12)} {c.name}  ({c.sector or 'n/a'})")
@@ -108,6 +163,36 @@ def main(argv=None):
     a.add_argument("--no-llm", action="store_true", help="force deterministic narrative")
     a.add_argument("--quiet", action="store_true", help="suppress the terminal summary")
     a.set_defaults(func=cmd_analyse)
+
+    r = sub.add_parser("research",
+                       help="run the research agent (mandate: side × market × depth)")
+    r.add_argument("query", help="company name or ticker")
+    r.add_argument("--side", choices=["sell-side", "buy-side"], default=None,
+                   help="research posture (inferred from the query if omitted)")
+    r.add_argument("--depth", default=None,
+                   help="L0..L5 or a name (snapshot/screen/brief/deep-dive/initiation/coverage)")
+    r.add_argument("--market", default=None,
+                   help="market key: US, IN, GB, EU, JP, HK, CN, AU, SG (inferred if omitted)")
+    r.add_argument("--coverage-store", default=None, metavar="DIR",
+                   help="directory for coverage memory (L4+); default ~/.stockanalyser/coverage")
+    r.add_argument("--html", metavar="FILE", help="write a self-contained HTML dashboard here")
+    r.add_argument("--open", action="store_true", help="open the HTML dashboard in a browser")
+    r.add_argument("--provider", default="auto",
+                   choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+    r.add_argument("--json", metavar="FILE", help="write a machine-readable summary here")
+    r.add_argument("--no-llm", action="store_true", help="force deterministic output")
+    r.add_argument("--quiet", action="store_true", help="suppress the printed product")
+    r.set_defaults(func=cmd_research)
+
+    cv = sub.add_parser("conviction",
+                        help="rank several names into a conviction / best-ideas list")
+    cv.add_argument("queries", nargs="+", help="two or more names/tickers")
+    cv.add_argument("--side", choices=["sell-side", "buy-side"], default=None)
+    cv.add_argument("--depth", default=None, help="depth per name (default L3)")
+    cv.add_argument("--market", default=None, help="market key (inferred if omitted)")
+    cv.add_argument("--provider", default="auto",
+                    choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+    cv.set_defaults(func=cmd_conviction)
 
     l = sub.add_parser("list", help="list bundled sample companies")
     l.set_defaults(func=cmd_list)

@@ -34,6 +34,95 @@ python -m stockanalyser analyse RELIANCE --provider offline --json reliance.json
 python -m stockanalyser list
 ```
 
+### Research agent (mandate: side × market × depth)
+
+On top of the lenses sits an **equity-research agent** that behaves like an analyst:
+it fixes a *mandate* before pulling data — **sell-side vs buy-side**, the **market**
+(any geography), and a **depth tier** (L0 snapshot → L5 living coverage) — then plans,
+runs the lenses, and renders a tier-appropriate product framed for that mandate.
+
+```bash
+# a sell-side company brief (market auto-inferred from the NSE listing)
+python -m stockanalyser research "Hitachi Energy" --side sell-side --depth L2
+
+# an L3 deep dive: driver model + triangulated DCF + scenario-weighted target
+python -m stockanalyser research "RELIANCE" --side sell-side --depth L3
+
+# an L4 initiation: full report + estimates + catalysts + coverage memory
+python -m stockanalyser research "RELIANCE" --side sell-side --depth L4
+
+# an L5 living-coverage note: results review, estimate revisions, thesis tracking
+python -m stockanalyser research "RELIANCE" --side sell-side --depth L5
+
+# a conviction / best-ideas list ranked across several names
+python -m stockanalyser conviction "RELIANCE" "Hitachi Energy" "REDFLAG" --side buy-side
+
+# any depth as a shareable, self-contained HTML dashboard
+python -m stockanalyser research "RELIANCE" --depth L4 --html reliance.html --open
+
+# the same name as a buy-side snapshot — different call, different framing
+python -m stockanalyser research "Hitachi Energy" --side buy-side --depth L0
+
+# side/depth/market are inferred from the request when not given
+python -m stockanalyser research "should I buy RELIANCE for my book?"
+```
+
+At **L3** the agent builds a driver-based forecast (revenue → margins → unlevered FCF,
+with capex normalising toward maintenance in the terminal year), values it three ways —
+**two-stage DCF at a market-anchored WACC, an exit-multiple cross-check, and a reverse-DCF**
+that reads the growth the price already implies (the variant-perception view) — across
+**bull / base / bear**, and reconciles the rating to the resulting price target (a strong
+business at an indefensible price is capped to Sell/Avoid, and vice-versa).
+
+At **L4** it assembles a full **initiation report** — industry primer, thesis, forward
+**estimates** with a variant-vs-market read (price-implied until a live consensus provider
+is connected), the triangulated valuation, risks, and a **catalyst calendar** — and writes
+to **coverage memory**: the first run initiates coverage, later runs become updates that
+say exactly what changed (rating moves, target revisions, thesis drift). The store is a
+plain JSON directory (`--coverage-store`, default `~/.stockanalyser/coverage`).
+
+At **L5** it maintains the name: a **results review** of the latest period, **estimate
+revisions** versus the last note, **thesis tracking** (which monitorables resolved, which
+are new, the rating's trajectory), and a **preview** of what to watch next. The
+`conviction` command runs the agent across several names and returns a **best-ideas list**
+ranked by return-to-target with a quality tilt — forensic red flags sink to the bottom.
+
+All six depth tiers (L0–L5) run today on bundled data; connecting a live provider
+lifts every tier onto real filings:
+
+```bash
+pip install -e ".[live]"
+
+# a full L4 initiation on live yfinance data — market/WACC inferred from the listing
+python -m stockanalyser research AAPL --provider yfinance --depth L4        # US
+python -m stockanalyser research RELIANCE.NS --provider yfinance --depth L3  # India
+python -m stockanalyser research 7203.T --provider yfinance --depth L3       # Japan (Toyota)
+python -m stockanalyser research BP.L --provider yfinance --depth L2         # UK
+```
+
+The `yfinance` adapter pulls prices + the full statement set (revenue, EBITDA,
+depreciation, working-capital lines, tax — everything the driver model needs) and
+maps each listing's exchange to its **market profile** (accounting regime, WACC,
+benchmark). Pass a global ticker with its Yahoo suffix (`.NS`, `.L`, `.T`, `.HK`,
+`.AX`, `.DE`, …); a bare symbol is tried as US, then NSE, then BSE. `--provider auto`
+uses yfinance when reachable and **falls back to the bundled snapshots** when it
+isn't, so a run never dead-ends. (Note: some sandboxed/CI networks block Yahoo's
+hosts — that's an egress policy, not a code issue; the adapter runs wherever Yahoo
+Finance is reachable.)
+
+```python
+from stockanalyser.agent import research
+out = research("Hitachi Energy", side="buy-side", depth="L2")
+print(out.headline)      # Buy-side · L2 · India → Own (composite 65.9/100)
+print(out.product)       # the rendered tearsheet
+```
+
+The same evidence produces a **sell-side rating** (Buy/Hold/Sell, vs benchmark) or a
+**buy-side position stance** (Own/Pass/Avoid, absolute) — and a forensic gate can veto
+a constructive call on either side. Phase 1 ships L0–L2; L3 modelling, L4 initiation and
+L5 living coverage slot in behind the same mandate. Full design:
+[`docs/equity-research-agent-blueprint.html`](docs/equity-research-agent-blueprint.html).
+
 ### Web app / site
 
 ```bash
@@ -42,10 +131,19 @@ python -m stockanalyser.web          # → http://localhost:8000  (search box + 
 ```
 
 A FastAPI site: landing page with search, live-rendered dashboards at `/analyse?q=…`, the
-framework at `/framework`, a JSON API at `/api/analyse`, autocomplete at `/api/suggest`,
-and interactive API docs at `/docs`. Containerised (`Dockerfile`) with one-click
-`render.yaml` — see [`docs/DEPLOY.md`](docs/DEPLOY.md). Runs on bundled data with no keys;
-set `ALPHAVANTAGE_API_KEY` / `ANTHROPIC_API_KEY` to go live.
+**research agent** at `/research?q=…&side=…&depth=…&market=…` (the full L0–L5 report with a
+side/depth/market control bar), the framework at `/framework`, JSON APIs at `/api/analyse`
+and `/api/research`, autocomplete at `/api/suggest`, and interactive API docs at `/docs`.
+Containerised (`Dockerfile`) with one-click `render.yaml` — see
+[`docs/DEPLOY.md`](docs/DEPLOY.md). Runs on bundled data with no keys; set
+`ALPHAVANTAGE_API_KEY` / `ANTHROPIC_API_KEY` to go live.
+
+```bash
+# a sell-side L4 initiation, rendered in the browser
+curl "localhost:8000/research?q=RELIANCE&side=sell-side&depth=L4"
+# the same, as JSON (mandate, call, target, scenarios, estimates, narrative, lenses)
+curl "localhost:8000/api/research?q=RELIANCE&side=buy-side&depth=L3"
+```
 
 ### From Python:
 
@@ -84,7 +182,7 @@ The engine only talks to a `DataProvider`; swap the source, keep the analytics.
 | Provider | Status | Needs |
 |---|---|---|
 | `offline` | ✅ bundled *illustrative* snapshots + simulated price history | nothing — runs anywhere |
-| `yfinance` | ✅ prices + basic fundamentals | `pip install stockanalyser[live]` + network |
+| `yfinance` | ✅ prices + **full fundamentals** (feeds the L3+ driver model), **global exchanges** | `pip install stockanalyser[live]` + network |
 | `alphavantage` | ✅ daily prices | `ALPHAVANTAGE_API_KEY` |
 | `screener` | 🧩 documented stub | implement `fetch/parse` |
 
@@ -96,6 +194,11 @@ clearly labelled *illustrative*; connect a live provider before making real deci
 With `anthropic` installed and `ANTHROPIC_API_KEY` set, the analyst write-up is generated
 by Claude from the lens evidence. Without it, a deterministic synthesiser writes the note.
 Either way the numbers come only from the analysis engine.
+
+The **research agent** carries its own mandate-aware *analyst read* on every L2+ product
+(terminal and HTML): a tight, side-appropriate note that reconciles the business-quality
+composite with the price target. It's LLM-written when a key is present and deterministic
+otherwise — and it never invents a number.
 
 ## Design notes
 

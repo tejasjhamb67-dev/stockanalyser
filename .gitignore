@@ -21,6 +21,7 @@ htmlcov/
 *.json
 !src/stockanalyser/data/samples/*.json
 !docs/**/*.json
+!docs/**/*.html
 
 # editors / OS
 .DS_Store
