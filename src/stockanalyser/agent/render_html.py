@@ -30,7 +30,7 @@ def _fmt(v, nd=0, suffix="", none="—"):
     return f"{v:,.{nd}f}{suffix}"
 
 
-def render_html(out) -> str:
+def render_html(out, nav_html: str = "", extra_css: str = "") -> str:
     c = out.company
     m = out.mandate
     body = "\n".join(filter(None, [
@@ -48,7 +48,8 @@ def render_html(out) -> str:
     ]))
     return (_PAGE
             .replace("{{TITLE}}", escape(f"{c.name} — {m.side.label} {m.depth.code}"))
-            .replace("{{STYLE}}", _CSS)
+            .replace("{{STYLE}}", _CSS + extra_css)
+            .replace("{{NAV}}", nav_html)
             .replace("{{BODY}}", body))
 
 
@@ -282,6 +283,7 @@ _PAGE = """<!doctype html>
 <style>{{STYLE}}</style>
 </head>
 <body>
+{{NAV}}
 <main class="wrap">
 {{BODY}}
 </main>

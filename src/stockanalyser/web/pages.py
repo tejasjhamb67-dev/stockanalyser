@@ -26,6 +26,37 @@ def nav_bar(query: str = "") -> str:
 {_datalist()}"""
 
 
+_DEPTHS = [("L0", "L0 · Snapshot"), ("L1", "L1 · Screen"), ("L2", "L2 · Brief"),
+           ("L3", "L3 · Deep dive"), ("L4", "L4 · Initiation"), ("L5", "L5 · Coverage")]
+_MARKETS = ["US", "IN", "GB", "EU", "JP", "HK", "CN", "AU", "SG"]
+
+
+def research_nav(query: str = "", side: str = "sell-side", depth: str = "L4",
+                 market: str = "") -> str:
+    """Sticky nav for the research agent — search + mandate controls (side/depth/market)."""
+    def opt(val, label, cur):
+        sel = " selected" if val == cur else ""
+        return f"<option value='{escape(val)}'{sel}>{escape(label)}</option>"
+
+    sides = opt("sell-side", "Sell-side", side) + opt("buy-side", "Buy-side", side)
+    depths = "".join(opt(v, lbl, depth) for v, lbl in _DEPTHS)
+    markets = opt("", "Auto-market", market) + "".join(opt(k, k, market) for k in _MARKETS)
+    return f"""
+<nav class="topnav">
+  <a href="/" class="brand">◧ {BRAND}</a>
+  <form class="navsearch navctrls" action="/research" method="get" role="search">
+    <input name="q" value="{escape(query)}" placeholder="Company…" list="samples"
+           autocomplete="off" aria-label="Company">
+    <select name="side" aria-label="Side">{sides}</select>
+    <select name="depth" aria-label="Depth">{depths}</select>
+    <select name="market" aria-label="Market">{markets}</select>
+    <button type="submit">Research</button>
+  </form>
+  <a href="/analyse?q={escape(query)}" class="navlink">Quick view</a>
+</nav>
+{_datalist()}"""
+
+
 def _datalist(samples: list[Company] | None = None) -> str:
     opts = ""
     if samples:
@@ -82,9 +113,29 @@ def landing_page(samples: list[Company]) -> str:
     <div class="lp-lensgrid">{lens_cards}</div>
   </section>
 
+  <section class="lp-agent">
+    <div class="lp-kicker">RESEARCH AGENT</div>
+    <h2>Or run a full research report</h2>
+    <p class="lp-lede">The analyst layer: pick a <b>mandate</b> — sell-side or buy-side, any market,
+      and a depth from L0 snapshot to L5 living coverage — and get a driver model, a triangulated
+      price target, an initiation report, and a coverage note.</p>
+    <form class="lp-search lp-rsearch" action="/research" method="get" role="search">
+      <input name="q" placeholder="e.g. RELIANCE, AAPL, 7203.T…" list="samples"
+             autocomplete="off" aria-label="Company">
+      <select name="side" aria-label="Side"><option value="sell-side">Sell-side</option>
+        <option value="buy-side">Buy-side</option></select>
+      <select name="depth" aria-label="Depth"><option value="L4" selected>L4 · Initiation</option>
+        <option value="L0">L0 · Snapshot</option><option value="L1">L1 · Screen</option>
+        <option value="L2">L2 · Brief</option><option value="L3">L3 · Deep dive</option>
+        <option value="L5">L5 · Coverage</option></select>
+      <button type="submit">Research →</button>
+    </form>
+  </section>
+
   <section class="lp-cta">
-    <a class="lp-btn" href="/analyse?q=POWERINDIA">See a live example →</a>
-    <a class="lp-link" href="/framework">Read the framework</a>
+    <a class="lp-btn" href="/research?q=POWERINDIA&side=sell-side&depth=L4">See an initiation report →</a>
+    <a class="lp-link" href="/analyse?q=POWERINDIA">Quick dashboard</a>
+    <a class="lp-link" href="/framework">Framework</a>
     <a class="lp-link" href="/docs">API</a>
   </section>
   <footer class="lp-foot">Decision-support tool, not investment advice. · {BRAND}</footer>
@@ -148,6 +199,15 @@ _SITE_CSS = """
   padding:8px 16px;border-radius:10px;cursor:pointer;font-size:14px}
 .navlink{color:var(--muted);text-decoration:none;font-size:14px;white-space:nowrap}
 .navlink:hover{color:var(--ink)}
+.navctrls{max-width:760px;flex-wrap:wrap}
+.navctrls select,.lp-rsearch select{padding:8px 10px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font-size:13px;cursor:pointer}
+/* landing: research agent section */
+.lp-agent{max-width:720px;margin:10px auto 0;text-align:center;padding:36px 16px 8px;
+  border-top:1px solid var(--line)}
+.lp-agent h2{font-size:26px;letter-spacing:-.02em;margin:10px 0 12px}
+.lp-rsearch{max-width:640px}
+.lp-rsearch select{background:var(--panel);font-size:15px;box-shadow:var(--shadow)}
 /* landing */
 .landing{max-width:1000px;margin:0 auto;padding:20px}
 .lp-hero{text-align:center;padding:64px 16px 40px}

@@ -131,10 +131,19 @@ python -m stockanalyser.web          # → http://localhost:8000  (search box + 
 ```
 
 A FastAPI site: landing page with search, live-rendered dashboards at `/analyse?q=…`, the
-framework at `/framework`, a JSON API at `/api/analyse`, autocomplete at `/api/suggest`,
-and interactive API docs at `/docs`. Containerised (`Dockerfile`) with one-click
-`render.yaml` — see [`docs/DEPLOY.md`](docs/DEPLOY.md). Runs on bundled data with no keys;
-set `ALPHAVANTAGE_API_KEY` / `ANTHROPIC_API_KEY` to go live.
+**research agent** at `/research?q=…&side=…&depth=…&market=…` (the full L0–L5 report with a
+side/depth/market control bar), the framework at `/framework`, JSON APIs at `/api/analyse`
+and `/api/research`, autocomplete at `/api/suggest`, and interactive API docs at `/docs`.
+Containerised (`Dockerfile`) with one-click `render.yaml` — see
+[`docs/DEPLOY.md`](docs/DEPLOY.md). Runs on bundled data with no keys; set
+`ALPHAVANTAGE_API_KEY` / `ANTHROPIC_API_KEY` to go live.
+
+```bash
+# a sell-side L4 initiation, rendered in the browser
+curl "localhost:8000/research?q=RELIANCE&side=sell-side&depth=L4"
+# the same, as JSON (mandate, call, target, scenarios, estimates, narrative, lenses)
+curl "localhost:8000/api/research?q=RELIANCE&side=buy-side&depth=L3"
+```
 
 ### From Python:
 

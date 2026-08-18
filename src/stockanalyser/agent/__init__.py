@@ -29,6 +29,7 @@ from .narrative import build_narrative
 from .planner import ResearchPlan, plan_research
 from .products import Call, decide_call
 from .render_html import render_html
+from .serialize import research_to_dict
 from .universe import UniverseRow, rank_universe, render_conviction_list
 
 __all__ = [
@@ -45,5 +46,5 @@ __all__ = [
     "EarningsReview", "EarningsPreview", "RevisionLine", "ThesisTracker",
     "earnings_review", "earnings_preview", "estimate_revisions", "thesis_tracker",
     "UniverseRow", "rank_universe", "render_conviction_list",
-    "render_html", "build_narrative",
+    "render_html", "build_narrative", "research_to_dict",
 ]
