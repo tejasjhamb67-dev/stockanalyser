@@ -69,8 +69,14 @@ def _prompt(out) -> str:
         lines.append(f"12-mo target: {a.currency} {a.weighted_target:,.0f} "
                      f"({a.target_upside_pct:+.0f}% vs price), range "
                      f"{a.fair_low:,.0f}-{a.fair_high:,.0f}, WACC {a.wacc*100:.0f}%.")
-        if a.variant:
-            lines.append(f"Variant: {a.variant}")
+    cv = out.consensus
+    if cv is not None and getattr(cv, "is_street", False) and cv.street_target is not None:
+        lines.append(f"Street consensus: mean target {cv.street_target:,.0f}"
+                     + (f" ({cv.street_num_analysts} analysts)" if cv.street_num_analysts else "")
+                     + (f", rated {cv.street_rating}" if cv.street_rating else "") + ".")
+    variant = _variant_text(out)
+    if variant:
+        lines.append(f"Variant: {variant}")
     lines.append("")
     lines.append("Lens scores & summaries:")
     for name, lens in out.lenses.items():
@@ -111,8 +117,9 @@ def _deterministic(out) -> str:
             f"({a.target_upside_pct:+.0f}% vs price) — so the {out.verdict.value.lower()} "
             f"quality read is {'confirmed' if (a.target_upside_pct or 0) >= 0 else 'capped'} "
             f"by valuation.")
-        if a.variant:
-            parts.append(a.variant)
+        variant = _variant_text(out)
+        if variant:
+            parts.append(variant)
     if out.call.gate == "fail":
         parts.append("A forensic red flag caps any constructive call regardless of the rest.")
 
@@ -125,6 +132,15 @@ def _deterministic(out) -> str:
 
     parts.append("Not investment advice.")
     return " ".join(parts)
+
+
+def _variant_text(out) -> str | None:
+    """The Street variant when a live provider supplied consensus, else the
+    price-implied (reverse-DCF) variant from the appraisal."""
+    cv = out.consensus
+    if cv is not None and getattr(cv, "is_street", False) and cv.variant:
+        return cv.variant
+    return out.appraisal.variant if out.appraisal else None
 
 
 def _strip(s: str) -> str:

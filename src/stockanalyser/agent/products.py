@@ -49,6 +49,28 @@ _BUY_STANCE = {
 }
 
 
+def _street_block(consensus) -> list[str]:
+    """A compact Street-consensus block: mean target, ratings, forward estimates."""
+    if consensus is None or not getattr(consensus, "is_street", False):
+        return []
+    L: list[str] = []
+    tgt = consensus.street_target
+    rng = ""
+    if consensus.street_target_low is not None and consensus.street_target_high is not None:
+        rng = f" (range {consensus.street_target_low:,.0f}–{consensus.street_target_high:,.0f})"
+    rating = f", rated {consensus.street_rating}" if consensus.street_rating else ""
+    n = f", {consensus.street_num_analysts} analysts" if consensus.street_num_analysts else ""
+    if tgt is not None:
+        L.append(f"   Street: mean target {tgt:,.0f}{rng}{rating}{n}")
+    if consensus.street_estimates:
+        L.append("     Street est.  FY1(curr)   FY2(next)")
+        for e in consensus.street_estimates:
+            f1 = f"{e.fy1:,.1f}" if e.fy1 is not None else "n/a"
+            f2 = f"{e.fy2:,.1f}" if e.fy2 is not None else "n/a"
+            L.append(f"     {e.metric.ljust(10)} {f1:>10}   {f2:>10}")
+    return L
+
+
 def _analyst_read(narrative: str) -> list[str]:
     """An 'Analyst read' block, prose wrapped to a readable width."""
     if not narrative:
@@ -343,11 +365,12 @@ def render_initiation(
         L.append(" 3 · Estimates & consensus")
         L.append(f"   Source: {consensus.source}")
         if consensus.estimates:
-            L.append("     metric        FY1          FY2")
+            L.append("     our est.     FY1          FY2")
             for e in consensus.estimates:
                 f1 = f"{e.fy1:,.0f}" if e.fy1 is not None else "n/a"
                 f2 = f"{e.fy2:,.0f}" if e.fy2 is not None else "n/a"
                 L.append(f"     {e.metric.ljust(10)} {f1:>10}   {f2:>10}")
+        L.extend(_street_block(consensus))
         if consensus.variant:
             L.append(f"   Variant: {consensus.variant}")
         L.append(f"   {consensus.note}")
@@ -392,7 +415,7 @@ def render_coverage(
     composite: float | None, appraisal=None, coverage_note: str = "",
     review=None, preview=None, revisions=None, tracker=None,
     monitor: list[str] | None = None, plan_notes: list[str] | None = None,
-    warnings: list[str] | None = None, narrative: str = "",
+    warnings: list[str] | None = None, narrative: str = "", consensus=None,
 ) -> str:
     monitor = monitor or []
     plan_notes = plan_notes or []
@@ -448,6 +471,13 @@ def render_coverage(
             L.append(f"   + NEW  {m}")
         for m in tracker.resolved_monitorables[:4]:
             L.append(f"   - RESOLVED/DROPPED  {m}")
+        L.append("")
+
+    if consensus is not None and getattr(consensus, "is_street", False):
+        L.append(" Street consensus")
+        L.extend(_street_block(consensus))
+        if consensus.variant:
+            L.append(f"   {consensus.variant}")
         L.append("")
 
     if preview:

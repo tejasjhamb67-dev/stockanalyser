@@ -117,7 +117,7 @@ def research(
     note = ""
     cov = None
     if plan.product in ("initiation", "coverage"):
-        consensus = build_consensus(appraisal, data.fundamentals)
+        consensus = build_consensus(appraisal, data.fundamentals, street=data.consensus)
         catalysts = build_catalysts(data)
         cov = _update_coverage(
             company, mandate, call, appraisal, composite, verdict, monitor,
@@ -164,7 +164,7 @@ def research(
             verdict=verdict, composite=composite, appraisal=appraisal,
             coverage_note=note, review=review, preview=preview, revisions=revisions,
             tracker=tracker, monitor=monitor, plan_notes=plan.notes, warnings=warnings,
-            narrative=out.narrative)
+            narrative=out.narrative, consensus=consensus)
     else:
         out.product = products.render_product(
             mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
