@@ -85,7 +85,27 @@ are new, the rating's trajectory), and a **preview** of what to watch next. The
 ranked by return-to-target with a quality tilt — forensic red flags sink to the bottom.
 
 All six depth tiers (L0–L5) run today on bundled data; connecting a live provider
-(`yfinance` / `alphavantage` / a `screener` adapter) lifts every tier onto real filings.
+lifts every tier onto real filings:
+
+```bash
+pip install -e ".[live]"
+
+# a full L4 initiation on live yfinance data — market/WACC inferred from the listing
+python -m stockanalyser research AAPL --provider yfinance --depth L4        # US
+python -m stockanalyser research RELIANCE.NS --provider yfinance --depth L3  # India
+python -m stockanalyser research 7203.T --provider yfinance --depth L3       # Japan (Toyota)
+python -m stockanalyser research BP.L --provider yfinance --depth L2         # UK
+```
+
+The `yfinance` adapter pulls prices + the full statement set (revenue, EBITDA,
+depreciation, working-capital lines, tax — everything the driver model needs) and
+maps each listing's exchange to its **market profile** (accounting regime, WACC,
+benchmark). Pass a global ticker with its Yahoo suffix (`.NS`, `.L`, `.T`, `.HK`,
+`.AX`, `.DE`, …); a bare symbol is tried as US, then NSE, then BSE. `--provider auto`
+uses yfinance when reachable and **falls back to the bundled snapshots** when it
+isn't, so a run never dead-ends. (Note: some sandboxed/CI networks block Yahoo's
+hosts — that's an egress policy, not a code issue; the adapter runs wherever Yahoo
+Finance is reachable.)
 
 ```python
 from stockanalyser.agent import research
@@ -150,7 +170,7 @@ The engine only talks to a `DataProvider`; swap the source, keep the analytics.
 | Provider | Status | Needs |
 |---|---|---|
 | `offline` | ✅ bundled *illustrative* snapshots + simulated price history | nothing — runs anywhere |
-| `yfinance` | ✅ prices + basic fundamentals | `pip install stockanalyser[live]` + network |
+| `yfinance` | ✅ prices + **full fundamentals** (feeds the L3+ driver model), **global exchanges** | `pip install stockanalyser[live]` + network |
 | `alphavantage` | ✅ daily prices | `ALPHAVANTAGE_API_KEY` |
 | `screener` | 🧩 documented stub | implement `fetch/parse` |
 
