@@ -98,6 +98,13 @@ def cmd_research(args):
         return 2
     if not args.quiet:
         print("\n" + out.product + "\n")
+    if args.html:
+        from .agent import render_html
+        outp = Path(args.html)
+        outp.write_text(render_html(out), encoding="utf-8")
+        print(f" dashboard → {outp.resolve()}")
+        if args.open:
+            webbrowser.open(outp.resolve().as_uri())
     if args.json:
         import json
         payload = {
@@ -168,6 +175,8 @@ def main(argv=None):
                    help="market key: US, IN, GB, EU, JP, HK, CN, AU, SG (inferred if omitted)")
     r.add_argument("--coverage-store", default=None, metavar="DIR",
                    help="directory for coverage memory (L4+); default ~/.stockanalyser/coverage")
+    r.add_argument("--html", metavar="FILE", help="write a self-contained HTML dashboard here")
+    r.add_argument("--open", action="store_true", help="open the HTML dashboard in a browser")
     r.add_argument("--provider", default="auto",
                    choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
     r.add_argument("--json", metavar="FILE", help="write a machine-readable summary here")

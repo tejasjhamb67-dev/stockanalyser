@@ -57,6 +57,9 @@ python -m stockanalyser research "RELIANCE" --side sell-side --depth L5
 # a conviction / best-ideas list ranked across several names
 python -m stockanalyser conviction "RELIANCE" "Hitachi Energy" "REDFLAG" --side buy-side
 
+# any depth as a shareable, self-contained HTML dashboard
+python -m stockanalyser research "RELIANCE" --depth L4 --html reliance.html --open
+
 # the same name as a buy-side snapshot — different call, different framing
 python -m stockanalyser research "Hitachi Energy" --side buy-side --depth L0
 

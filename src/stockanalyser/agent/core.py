@@ -47,6 +47,10 @@ class ResearchOutput:
     consensus: ConsensusView | None = None
     catalysts: list[Catalyst] = field(default_factory=list)
     coverage_note: str = ""
+    review: object | None = None            # L5: EarningsReview
+    preview: object | None = None           # L5: EarningsPreview
+    revisions: list = field(default_factory=list)   # L5: list[RevisionLine]
+    tracker: object | None = None           # L5: ThesisTracker
     bull_thesis: list[str] = field(default_factory=list)
     bear_thesis: list[str] = field(default_factory=list)
     monitorables: list[str] = field(default_factory=list)
@@ -118,6 +122,8 @@ def research(
             consensus, coverage_store, record_coverage)
         note = cov.note
 
+    review = preview = tracker = None
+    revisions: list = []
     if plan.product == "initiation":
         rendered = products.render_initiation(
             mandate=mandate, company=company, generated_at=generated_at, lenses=lenses,
@@ -147,7 +153,8 @@ def research(
         mandate=mandate, company=company, generated_at=generated_at, plan=plan,
         lenses=lenses, composite_score=composite, verdict=verdict, call=call,
         appraisal=appraisal, consensus=consensus, catalysts=catalysts or [],
-        coverage_note=note,
+        coverage_note=note, review=review, preview=preview, revisions=revisions,
+        tracker=tracker,
         bull_thesis=bull, bear_thesis=bear, monitorables=monitor, product=rendered,
         data_sources={
             "prices": data.prices.source if data.prices else "n/a",
