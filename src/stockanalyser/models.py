@@ -125,6 +125,38 @@ class Fundamentals:
 
 
 @dataclass
+class AnalystEstimate:
+    """One forward Street estimate for a metric in a period."""
+    period: str                      # "curr FY" / "next FY"
+    metric: str                      # "EPS" / "Revenue"
+    mean: Optional[float] = None
+    low: Optional[float] = None
+    high: Optional[float] = None
+    num_analysts: Optional[int] = None
+
+
+@dataclass
+class StreetConsensus:
+    """Sell-side consensus a live provider supplies: analyst price target, the
+    ratings distribution, and forward EPS/revenue estimates."""
+    symbol: str
+    price_target_mean: Optional[float] = None
+    price_target_high: Optional[float] = None
+    price_target_low: Optional[float] = None
+    num_analysts: Optional[int] = None
+    recommendation_key: Optional[str] = None    # "buy" / "hold" / "strong_buy" ...
+    recommendation_mean: Optional[float] = None  # 1 (strong buy) .. 5 (strong sell)
+    rec_counts: dict[str, int] = field(default_factory=dict)
+    estimates: list[AnalystEstimate] = field(default_factory=list)
+    source: str = "unknown"
+
+    @property
+    def has_view(self) -> bool:
+        return (self.price_target_mean is not None or bool(self.estimates)
+                or self.recommendation_key is not None)
+
+
+@dataclass
 class ShareholdingSnapshot:
     period: str
     promoter: Optional[float] = None         # % of equity
@@ -173,6 +205,7 @@ class CompanyData:
     company: Company
     prices: Optional[PriceHistory] = None
     fundamentals: Optional[Fundamentals] = None
+    consensus: Optional[StreetConsensus] = None
     ownership: Optional[Ownership] = None
     news: list[NewsItem] = field(default_factory=list)
     corporate_actions: list[CorporateAction] = field(default_factory=list)

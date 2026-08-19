@@ -75,11 +75,17 @@ that reads the growth the price already implies (the variant-perception view) �
 business at an indefensible price is capped to Sell/Avoid, and vice-versa).
 
 At **L4** it assembles a full **initiation report** — industry primer, thesis, forward
-**estimates** with a variant-vs-market read (price-implied until a live consensus provider
-is connected), the triangulated valuation, risks, and a **catalyst calendar** — and writes
-to **coverage memory**: the first run initiates coverage, later runs become updates that
-say exactly what changed (rating moves, target revisions, thesis drift). The store is a
-plain JSON directory (`--coverage-store`, default `~/.stockanalyser/coverage`).
+**estimates** with a **variant-vs-consensus** read, the triangulated valuation, risks, and a
+**catalyst calendar** — and writes to **coverage memory**: the first run initiates coverage,
+later runs become updates that say exactly what changed (rating moves, target revisions,
+thesis drift). The store is a plain JSON directory (`--coverage-store`, default
+`~/.stockanalyser/coverage`).
+
+The consensus is **real sell-side data** when a live provider supplies it — the yfinance
+adapter pulls the analyst **mean/high/low price target**, the **ratings distribution**, and
+**forward EPS/revenue estimates**, and the variant becomes our triangulated target vs the
+Street mean ("above/below the Street"). With no coverage data it falls back to a
+**price-implied** consensus from the reverse-DCF. Same report either way, honestly labelled.
 
 At **L5** it maintains the name: a **results review** of the latest period, **estimate
 revisions** versus the last note, **thesis tracking** (which monitorables resolved, which
@@ -182,7 +188,7 @@ The engine only talks to a `DataProvider`; swap the source, keep the analytics.
 | Provider | Status | Needs |
 |---|---|---|
 | `offline` | ✅ bundled *illustrative* snapshots + simulated price history | nothing — runs anywhere |
-| `yfinance` | ✅ prices + **full fundamentals** (feeds the L3+ driver model), **global exchanges** | `pip install stockanalyser[live]` + network |
+| `yfinance` | ✅ prices + **full fundamentals** (feeds the L3+ driver model) + **Street consensus** (targets, ratings, estimates), **global exchanges** | `pip install stockanalyser[live]` + network |
 | `alphavantage` | ✅ daily prices | `ALPHAVANTAGE_API_KEY` |
 | `screener` | 🧩 documented stub | implement `fetch/parse` |
 

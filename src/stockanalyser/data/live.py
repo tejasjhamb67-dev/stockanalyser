@@ -15,7 +15,10 @@ from typing import Optional
 
 import pandas as pd
 
-from ..models import Company, FinancialStatement, Fundamentals, PriceHistory
+from ..models import (
+    AnalystEstimate, Company, FinancialStatement, Fundamentals, PriceHistory,
+    StreetConsensus,
+)
 from .base import DataProvider, ProviderUnavailable
 
 # yfinance ticker suffix ↔ our exchange code (drives global resolution + market profile)
@@ -108,6 +111,17 @@ class YFinanceProvider(DataProvider):
         except Exception:
             return None
         return parse_fundamentals(company.symbol, fin, bs, cf, info)
+
+    def consensus(self, company: Company):
+        yf = self._yf()
+        t = yf.Ticker(self._yf_symbol(company))
+        info = _try(lambda: t.get_info()) or {}
+        return parse_consensus(
+            company.symbol, info,
+            price_targets=_try(lambda: t.analyst_price_targets),
+            earnings_est=_try(lambda: t.earnings_estimate),
+            revenue_est=_try(lambda: t.revenue_estimate),
+            recommendations=_try(lambda: t.recommendations))
 
     def benchmarks(self, company: Company) -> dict[str, PriceHistory]:
         yf = self._yf()
@@ -298,6 +312,96 @@ def parse_fundamentals(symbol: str, fin, bs, cf, info) -> Optional[Fundamentals]
 def _period_label(col) -> str:
     yr = getattr(col, "year", None)
     return f"FY{yr}" if yr else str(col)
+
+
+def _try(fn):
+    try:
+        return fn()
+    except Exception:
+        return None
+
+
+# yfinance estimate index labels → our period labels (current & next fiscal year)
+_EST_PERIODS = {"0y": "curr FY", "+1y": "next FY"}
+
+
+def parse_consensus(symbol, info, price_targets=None, earnings_est=None,
+                    revenue_est=None, recommendations=None):
+    """Map yfinance analyst data (info dict + estimate/recommendation frames) into a
+    StreetConsensus, or None when the name has no sell-side coverage."""
+    info = info or {}
+    pt = price_targets if isinstance(price_targets, dict) else {}
+    tgt_mean = _num(info.get("targetMeanPrice")) or _num(pt.get("mean"))
+    tgt_high = _num(info.get("targetHighPrice")) or _num(pt.get("high"))
+    tgt_low = _num(info.get("targetLowPrice")) or _num(pt.get("low"))
+    n = _int(info.get("numberOfAnalystOpinions"))
+    rec_key = info.get("recommendationKey")
+    rec_mean = _num(info.get("recommendationMean"))
+    rec_counts = _rec_counts(recommendations)
+    estimates = _est_lines(earnings_est, "EPS") + _est_lines(revenue_est, "Revenue")
+
+    sc = StreetConsensus(
+        symbol=symbol, price_target_mean=tgt_mean, price_target_high=tgt_high,
+        price_target_low=tgt_low, num_analysts=n,
+        recommendation_key=(str(rec_key) if rec_key else None),
+        recommendation_mean=rec_mean, rec_counts=rec_counts, estimates=estimates,
+        source="yfinance")
+    return sc if sc.has_view else None
+
+
+def _est_lines(df, metric: str) -> list[AnalystEstimate]:
+    if df is None or getattr(df, "empty", True):
+        return []
+    out: list[AnalystEstimate] = []
+    for key, label in _EST_PERIODS.items():
+        if key not in df.index:
+            continue
+        row = df.loc[key]
+        out.append(AnalystEstimate(
+            period=label, metric=metric,
+            mean=_num(_cell(row, "avg")), low=_num(_cell(row, "low")),
+            high=_num(_cell(row, "high")),
+            num_analysts=_int(_cell(row, "numberOfAnalysts"))))
+    return out
+
+
+def _rec_counts(df) -> dict[str, int]:
+    if df is None or getattr(df, "empty", True):
+        return {}
+    # newest row: prefer the '0m' period, else the first row
+    row = None
+    if "period" in getattr(df, "columns", []):
+        m = df[df["period"] == "0m"]
+        row = (m.iloc[0] if not m.empty else df.iloc[0])
+    else:
+        row = df.iloc[0]
+    out: dict[str, int] = {}
+    for k in ("strongBuy", "buy", "hold", "sell", "strongSell"):
+        v = _int(_cell(row, k))
+        if v is not None:
+            out[k] = v
+    return out
+
+
+def _cell(row, key):
+    try:
+        return row.get(key)
+    except Exception:
+        return None
+
+
+def _num(v):
+    try:
+        if v is None or pd.isna(v):
+            return None
+        return float(v)
+    except Exception:
+        return None
+
+
+def _int(v):
+    f = _num(v)
+    return int(f) if f is not None else None
 
 
 class AlphaVantageProvider(DataProvider):

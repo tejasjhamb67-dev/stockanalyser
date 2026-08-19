@@ -77,6 +77,7 @@ def resolve_and_fetch(query: str, config: Config) -> Optional[tuple[Company, Com
         if off_company is not None:
             off = offline.fetch(off_company)
             data.fundamentals = data.fundamentals or off.fundamentals
+            data.consensus = data.consensus or off.consensus
             data.ownership = data.ownership or off.ownership
             data.news = data.news or off.news
             data.corporate_actions = data.corporate_actions or off.corporate_actions

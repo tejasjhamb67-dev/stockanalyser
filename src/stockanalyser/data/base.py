@@ -15,6 +15,7 @@ from ..models import (
     Fundamentals,
     Ownership,
     PriceHistory,
+    StreetConsensus,
 )
 
 
@@ -40,6 +41,11 @@ class DataProvider(ABC):
     def prices(self, company: Company) -> Optional[PriceHistory]: ...
 
     def fundamentals(self, company: Company) -> Optional[Fundamentals]:
+        return None
+
+    def consensus(self, company: Company) -> Optional[StreetConsensus]:
+        """Sell-side analyst consensus (price target, ratings, forward estimates).
+        Only live providers implement this; offline/synthetic sources return None."""
         return None
 
     def ownership(self, company: Company) -> Optional[Ownership]:
@@ -74,6 +80,7 @@ class DataProvider(ABC):
             company=company,
             prices=_safe(self.prices, None),
             fundamentals=_safe(self.fundamentals, None),
+            consensus=_safe(self.consensus, None),
             ownership=_safe(self.ownership, None),
             news=_safe(self.news, []) or [],
             corporate_actions=_safe(self.corporate_actions, []) or [],

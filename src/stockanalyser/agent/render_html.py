@@ -184,11 +184,38 @@ def _estimates(out):
 <section class="card">
   <h2>Estimates & consensus <span class="star">{escape(cv.source)}</span></h2>
   <div class="tablewrap"><table class="est">
-    <thead><tr><th>Metric</th><th class='num'>FY1</th><th class='num'>FY2</th></tr></thead>
+    <thead><tr><th>Our estimate</th><th class='num'>FY1</th><th class='num'>FY2</th></tr></thead>
     <tbody>{rows}</tbody></table></div>
+  {_street_html(cv)}
   {variant}
   <div class="note">{escape(cv.note)}</div>
 </section>"""
+
+
+def _street_html(cv):
+    if not getattr(cv, "is_street", False):
+        return ""
+    bits = []
+    if cv.street_target is not None:
+        rng = ""
+        if cv.street_target_low is not None and cv.street_target_high is not None:
+            rng = f" (range {cv.street_target_low:,.0f}–{cv.street_target_high:,.0f})"
+        rated = f" · rated <b>{escape(cv.street_rating)}</b>" if cv.street_rating else ""
+        n = f" · {cv.street_num_analysts} analysts" if cv.street_num_analysts else ""
+        gap = ""
+        if cv.target_gap_pct is not None:
+            cls = "up" if cv.target_gap_pct >= 0 else "down"
+            gap = f" · our target <span class='{cls}'>{cv.target_gap_pct:+.0f}%</span> vs Street"
+        bits.append(f"<div class='street'>Street: mean target <b>{cv.street_target:,.0f}</b>"
+                    f"{rng}{rated}{n}{gap}</div>")
+    if cv.street_estimates:
+        srows = "".join(
+            f"<tr><td>{escape(e.metric)}</td><td class='num'>{_fmt(e.fy1, 1)}</td>"
+            f"<td class='num'>{_fmt(e.fy2, 1)}</td></tr>" for e in cv.street_estimates)
+        bits.append("<div class='tablewrap'><table class='est'><thead><tr>"
+                    "<th>Street estimate</th><th class='num'>FY1 (curr)</th>"
+                    f"<th class='num'>FY2 (next)</th></tr></thead><tbody>{srows}</tbody></table></div>")
+    return "".join(bits)
 
 
 def _living_coverage(out):
@@ -379,6 +406,9 @@ td{padding:6px 8px;border-bottom:1px solid var(--line)}
 .wtgt{margin-top:12px;font-size:14px} .wtgt b{font-size:15px}
 .vx{font-size:12.5px;color:var(--muted);margin-top:4px}
 .analyst p{font-size:14.5px;line-height:1.65;margin:0}
+.street{margin:10px 0 6px;font-size:13px;padding:8px 12px;border-radius:8px;
+  background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.street b{color:var(--ink)}
 .variant{margin-top:10px;font-size:13.5px;padding:8px 12px;border-left:3px solid var(--brass);
   background:color-mix(in srgb,var(--brass) 8%,transparent);border-radius:0 8px 8px 0}
 .note{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic}

@@ -65,7 +65,17 @@ def _estimates(cv) -> dict | None:
         return None
     return {
         "source": cv.source,
+        "is_street": cv.is_street,
         "our_growth": cv.our_growth, "implied_growth": cv.implied_growth,
         "variant": cv.variant,
         "lines": [{"metric": e.metric, "fy1": e.fy1, "fy2": e.fy2} for e in cv.estimates],
+        "our_target": cv.our_target,
+        "street_target": cv.street_target,
+        "street_target_low": cv.street_target_low,
+        "street_target_high": cv.street_target_high,
+        "street_rating": cv.street_rating,
+        "street_num_analysts": cv.street_num_analysts,
+        "target_gap_pct": cv.target_gap_pct,
+        "street_lines": [{"metric": e.metric, "fy1": e.fy1, "fy2": e.fy2}
+                         for e in cv.street_estimates],
     }
