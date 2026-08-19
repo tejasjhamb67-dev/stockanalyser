@@ -208,7 +208,8 @@ The engine only talks to a `DataProvider`; swap the source, keep the analytics.
 | Provider | Status | Needs |
 |---|---|---|
 | `offline` | ✅ bundled *illustrative* snapshots + simulated price history | nothing — runs anywhere |
-| `yfinance` | ✅ prices + **full fundamentals** (feeds the L3+ driver model) + **Street consensus** (targets, ratings, estimates), **global exchanges** | `pip install stockanalyser[live]` + network |
+| `fmp` ⭐ | ✅ **prices + full fundamentals + consensus + transcripts** for any global ticker, from one key — **reliable from servers** | `FMP_API_KEY` (free: financialmodelingprep.com) |
+| `yfinance` | ✅ prices + full fundamentals + Street consensus, global exchanges — but **Yahoo blocks datacenter IPs**, so unreliable when deployed | `pip install stockanalyser[live]` + network |
 | `alphavantage` | ✅ daily prices | `ALPHAVANTAGE_API_KEY` |
 | `screener` | 🧩 documented stub | implement `fetch/parse` |
 

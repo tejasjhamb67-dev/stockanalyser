@@ -224,8 +224,9 @@ def _provenance_warnings(company, data, source, lenses) -> list[str]:
     }
     if "offline-sample" in sources:
         warnings.append(
-            "Data is from bundled ILLUSTRATIVE snapshots (offline mode). Figures are "
-            "approximate/synthetic — connect a live provider before acting.")
+            "Data is from bundled ILLUSTRATIVE snapshots — figures are approximate/synthetic. "
+            "Set FMP_API_KEY (a free key from financialmodelingprep.com) to pull real prices, "
+            "fundamentals and consensus for any ticker.")
     if company.sector is None:
         warnings.append("Unknown symbol — only synthetic price history was available.")
     fund = lenses.get("Fundamental")

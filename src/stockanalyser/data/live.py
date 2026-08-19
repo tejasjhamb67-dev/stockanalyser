@@ -456,6 +456,196 @@ class AlphaVantageProvider(DataProvider):
         return PriceHistory(symbol=company.symbol, frame=frame, source=self.name)
 
 
+class FMPProvider(DataProvider):
+    """Financial Modeling Prep — prices + full fundamentals + profile + consensus for
+    (nearly) any global listing, from one key. Reliable from servers (a keyed API,
+    not screen-scraping), which is why it's the recommended production source: set
+    FMP_API_KEY and any ticker or name goes live.
+
+    Symbols use the same suffixes as Yahoo (RELIANCE.NS, BP.L); a bare name is
+    resolved via FMP search.
+    """
+    name = "fmp"
+    BASE = "https://financialmodelingprep.com"
+
+    def __init__(self, api_key: Optional[str] = None) -> None:
+        import os
+        self.api_key = api_key or os.environ.get("FMP_API_KEY")
+
+    def available(self) -> bool:
+        try:
+            import requests  # noqa
+        except Exception:
+            return False
+        return bool(self.api_key)
+
+    def _get(self, path: str, **params):
+        import requests
+        params["apikey"] = self.api_key
+        r = requests.get(f"{self.BASE}{path}", params=params, timeout=25)
+        r.raise_for_status()
+        return r.json()
+
+    def resolve(self, query: str) -> Optional[Company]:
+        if not self.available():
+            raise ProviderUnavailable("FMP_API_KEY not set")
+        raw = query.strip().upper().replace(" ", "") if len(query.split()) == 1 else query.strip()
+        # try the query as a direct symbol first, then fall back to search
+        for sym in (raw, None):
+            if sym is None:
+                try:
+                    hits = self._get("/api/v3/search", query=query.strip(), limit=5) or []
+                except Exception:
+                    hits = []
+                sym = hits[0].get("symbol") if hits else None
+                if not sym:
+                    return None
+            try:
+                prof = self._get(f"/api/v3/profile/{sym}")
+            except Exception:
+                prof = None
+            if prof:
+                return company_from_fmp_profile(prof[0] if isinstance(prof, list) else prof)
+        return None
+
+    def prices(self, company: Company) -> Optional[PriceHistory]:
+        try:
+            payload = self._get(f"/api/v3/historical-price-full/{company.symbol}",
+                                serietype="line", timeseries=520)
+        except Exception:
+            return None
+        frame = parse_fmp_prices(payload)
+        if frame is None:
+            return None
+        return PriceHistory(symbol=company.symbol, frame=frame, source=self.name)
+
+    def fundamentals(self, company: Company) -> Optional[Fundamentals]:
+        def _safe(path, **p):
+            try:
+                return self._get(path, **p)
+            except Exception:
+                return None
+        income = _safe(f"/api/v3/income-statement/{company.symbol}", limit=6)
+        balance = _safe(f"/api/v3/balance-sheet-statement/{company.symbol}", limit=6)
+        cashflow = _safe(f"/api/v3/cash-flow-statement/{company.symbol}", limit=6)
+        profile = _safe(f"/api/v3/profile/{company.symbol}")
+        prof = (profile[0] if isinstance(profile, list) and profile else profile) or {}
+        return parse_fmp_fundamentals(company.symbol, income, balance, cashflow, prof)
+
+    def consensus(self, company: Company):
+        def _safe(path, **p):
+            try:
+                return self._get(path, **p)
+            except Exception:
+                return None
+        target = _safe("/api/v4/price-target-consensus", symbol=company.symbol)
+        rating = _safe(f"/api/v3/rating/{company.symbol}")
+        return parse_fmp_street(company.symbol, target, rating)
+
+
+# ── FMP pure mappers (network-free, unit-tested) ─────────────────────────────
+_FMP_EXCHANGE = {"HKSE": "HKEX", "SHH": "SSE", "SHZ": "SZSE", "JPX": "TSE",
+                 "TSE": "TSE", "TSXV": "TSXV", "EURONEXT": "EPA"}
+
+
+def company_from_fmp_profile(p: dict) -> Company:
+    exch = (p.get("exchangeShortName") or p.get("exchange") or "").upper()
+    return Company(
+        symbol=p.get("symbol"), name=p.get("companyName") or p.get("symbol"),
+        exchange=_FMP_EXCHANGE.get(exch, exch or "NASDAQ"),
+        sector=p.get("sector") or None, industry=p.get("industry") or None,
+        currency=p.get("currency") or "USD", market_cap=_num(p.get("mktCap")),
+        description=p.get("description") or None)
+
+
+def parse_fmp_prices(payload):
+    hist = payload.get("historical") if isinstance(payload, dict) else payload
+    if not hist:
+        return None
+    rows = {}
+    for h in hist:
+        d = h.get("date")
+        if not d:
+            continue
+        rows[pd.Timestamp(d)] = {
+            "open": _num(h.get("open")), "high": _num(h.get("high")),
+            "low": _num(h.get("low")), "close": _num(h.get("close")),
+            "volume": _num(h.get("volume")) or 0.0}
+    if not rows:
+        return None
+    frame = pd.DataFrame(rows).T.sort_index()[["open", "high", "low", "close", "volume"]]
+    frame = frame.dropna(subset=["close"])
+    return frame if not frame.empty else None
+
+
+def parse_fmp_fundamentals(symbol, income, balance, cashflow, profile) -> Optional[Fundamentals]:
+    if not income:
+        return None
+    bmap = {r.get("date"): r for r in (balance or [])}
+    cmap = {r.get("date"): r for r in (cashflow or [])}
+    profile = profile or {}
+    stmts: list[FinancialStatement] = []
+    for r in reversed(income):      # FMP is newest-first; we want oldest→newest
+        d = r.get("date")
+        b, c = bmap.get(d, {}), cmap.get(d, {})
+        dep = _num(r.get("depreciationAndAmortization")) or _num(c.get("depreciationAndAmortization"))
+        ebit = _num(r.get("operatingIncome"))
+        ebitda = _num(r.get("ebitda"))
+        if ebitda is None and ebit is not None and dep is not None:
+            ebitda = ebit + dep
+        stmts.append(FinancialStatement(
+            period=_fmp_period(r),
+            revenue=_num(r.get("revenue")), ebitda=ebitda, depreciation=_absn(dep),
+            ebit=ebit, interest=_absn(_num(r.get("interestExpense"))),
+            pbt=_num(r.get("incomeBeforeTax")), tax=_num(r.get("incomeTaxExpense")),
+            net_income=_num(r.get("netIncome")), total_assets=_num(b.get("totalAssets")),
+            current_assets=_num(b.get("totalCurrentAssets")), inventory=_num(b.get("inventory")),
+            receivables=_num(b.get("netReceivables")),
+            cash=_num(b.get("cashAndCashEquivalents")),
+            current_liabilities=_num(b.get("totalCurrentLiabilities")),
+            total_debt=_num(b.get("totalDebt")), equity=_num(b.get("totalStockholdersEquity")),
+            payables=_num(b.get("accountPayables")), cfo=_num(c.get("operatingCashFlow")),
+            capex=_absn(_num(c.get("capitalExpenditure"))),
+            shares_outstanding=_num(r.get("weightedAverageShsOut"))))
+    if not stmts:
+        return None
+    div = _num(profile.get("lastDiv"))
+    if div:
+        stmts[-1].dividend_per_share = div
+    shares = _num(profile.get("sharesOutstanding")) or stmts[-1].shares_outstanding
+    return Fundamentals(symbol=symbol, statements=stmts,
+                        price=_num(profile.get("price")),
+                        shares_outstanding=shares, source="fmp")
+
+
+def _fmp_period(row: dict) -> str:
+    yr = row.get("calendarYear")
+    per = row.get("period")
+    if yr and per and per != "FY":
+        return f"{per}FY{str(yr)[-2:]}"
+    if yr:
+        return f"FY{yr}"
+    return str(row.get("date") or "period")
+
+
+_FMP_RATING = {"strong buy": "strong_buy", "buy": "buy", "outperform": "buy",
+               "hold": "hold", "neutral": "hold", "sell": "sell",
+               "underperform": "sell", "strong sell": "strong_sell"}
+
+
+def parse_fmp_street(symbol, target, rating):
+    t = (target[0] if isinstance(target, list) and target else target) or {}
+    r = (rating[0] if isinstance(rating, list) and rating else rating) or {}
+    mean = _num(t.get("targetConsensus")) or _num(t.get("targetMedian"))
+    rec = (r.get("ratingRecommendation") or r.get("rating") or "").strip().lower()
+    sc = StreetConsensus(
+        symbol=symbol, price_target_mean=mean,
+        price_target_high=_num(t.get("targetHigh")), price_target_low=_num(t.get("targetLow")),
+        recommendation_key=_FMP_RATING.get(rec) or (rec or None),
+        source="fmp")
+    return sc if sc.has_view else None
+
+
 class ScreenerProvider(DataProvider):
     """Placeholder adapter for screener.in fundamentals.
 

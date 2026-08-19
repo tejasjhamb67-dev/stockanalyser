@@ -157,7 +157,7 @@ def main(argv=None):
     a = sub.add_parser("analyse", help="analyse a company by name or ticker")
     a.add_argument("query", help="company name or ticker, e.g. 'Hitachi Energy' or POWERINDIA")
     a.add_argument("--provider", default="auto",
-                   choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+                   choices=["auto", "offline", "fmp", "yfinance", "alphavantage", "screener"])
     a.add_argument("--html", metavar="FILE", help="write the HTML dashboard here")
     a.add_argument("--json", metavar="FILE", help="write the machine-readable report here")
     a.add_argument("--open", action="store_true", help="open the dashboard in a browser")
@@ -183,7 +183,7 @@ def main(argv=None):
     r.add_argument("--html", metavar="FILE", help="write a self-contained HTML dashboard here")
     r.add_argument("--open", action="store_true", help="open the HTML dashboard in a browser")
     r.add_argument("--provider", default="auto",
-                   choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+                   choices=["auto", "offline", "fmp", "yfinance", "alphavantage", "screener"])
     r.add_argument("--json", metavar="FILE", help="write a machine-readable summary here")
     r.add_argument("--no-llm", action="store_true", help="force deterministic output")
     r.add_argument("--quiet", action="store_true", help="suppress the printed product")
@@ -196,7 +196,7 @@ def main(argv=None):
     cv.add_argument("--depth", default=None, help="depth per name (default L3)")
     cv.add_argument("--market", default=None, help="market key (inferred if omitted)")
     cv.add_argument("--provider", default="auto",
-                    choices=["auto", "offline", "yfinance", "alphavantage", "screener"])
+                    choices=["auto", "offline", "fmp", "yfinance", "alphavantage", "screener"])
     cv.set_defaults(func=cmd_conviction)
 
     l = sub.add_parser("list", help="list bundled sample companies")
