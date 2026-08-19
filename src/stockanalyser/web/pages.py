@@ -57,6 +57,31 @@ def research_nav(query: str = "", side: str = "sell-side", depth: str = "L4",
 {_datalist()}"""
 
 
+def conviction_nav(query: str = "", side: str = "sell-side", depth: str = "L3",
+                   market: str = "") -> str:
+    """Sticky nav for the conviction screen — a multi-name (comma-separated) search."""
+    def opt(val, label, cur):
+        sel = " selected" if val == cur else ""
+        return f"<option value='{escape(val)}'{sel}>{escape(label)}</option>"
+    sides = opt("sell-side", "Sell-side", side) + opt("buy-side", "Buy-side", side)
+    depths = "".join(opt(v, lbl, depth) for v, lbl in _DEPTHS)
+    markets = opt("", "Auto-market", market) + "".join(opt(k, k, market) for k in _MARKETS)
+    return f"""
+<nav class="topnav">
+  <a href="/" class="brand">◧ {BRAND}</a>
+  <form class="navsearch navctrls" action="/conviction" method="get" role="search">
+    <input name="q" value="{escape(query)}" placeholder="RELIANCE, TCS, INFY…"
+           autocomplete="off" aria-label="Companies (comma-separated)">
+    <select name="side" aria-label="Side">{sides}</select>
+    <select name="depth" aria-label="Depth">{depths}</select>
+    <select name="market" aria-label="Market">{markets}</select>
+    <button type="submit">Rank</button>
+  </form>
+  <a href="/" class="navlink">Home</a>
+</nav>
+{_datalist()}"""
+
+
 def _datalist(samples: list[Company] | None = None) -> str:
     opts = ""
     if samples:
@@ -132,8 +157,24 @@ def landing_page(samples: list[Company]) -> str:
     </form>
   </section>
 
+  <section class="lp-agent">
+    <div class="lp-kicker">CONVICTION SCREEN</div>
+    <h2>Or rank a whole watchlist</h2>
+    <p class="lp-lede">Drop in several names and get a <b>best-ideas list</b> — ranked by
+      return-to-target with a quality tilt, forensic red flags sunk to the bottom. Click any row
+      for its full report.</p>
+    <form class="lp-search lp-rsearch" action="/conviction" method="get" role="search">
+      <input name="q" placeholder="RELIANCE, Hitachi Energy, REDFLAG…"
+             autocomplete="off" aria-label="Companies (comma-separated)">
+      <select name="side" aria-label="Side"><option value="sell-side">Sell-side</option>
+        <option value="buy-side">Buy-side</option></select>
+      <button type="submit">Rank →</button>
+    </form>
+  </section>
+
   <section class="lp-cta">
     <a class="lp-btn" href="/research?q=POWERINDIA&side=sell-side&depth=L4">See an initiation report →</a>
+    <a class="lp-link" href="/conviction?q=RELIANCE,Hitachi%20Energy,REDFLAG&side=buy-side">Conviction list</a>
     <a class="lp-link" href="/analyse?q=POWERINDIA">Quick dashboard</a>
     <a class="lp-link" href="/framework">Framework</a>
     <a class="lp-link" href="/docs">API</a>
