@@ -87,6 +87,18 @@ adapter pulls the analyst **mean/high/low price target**, the **ratings distribu
 Street mean ("above/below the Street"). With no coverage data it falls back to a
 **price-implied** consensus from the reverse-DCF. Same report either way, honestly labelled.
 
+**Real earnings-call transcripts.** The qualitative lens (tone, themes, guidance, red-flag
+phrases, quarter-over-quarter theme drift) runs on real concall text when you supply it —
+drop transcripts in a directory and point the agent at it, or set `FMP_API_KEY` to pull them
+from Financial Modeling Prep. Real transcripts replace the bundled illustrative samples.
+
+```bash
+# <dir>/<SYMBOL>_<period>.txt  or  <dir>/<SYMBOL>/<period>.txt  (a leading "Date: YYYY-MM-DD" is read)
+python -m stockanalyser research RELIANCE --depth L4 --transcripts ./transcripts
+STOCKANALYSER_TRANSCRIPTS=./transcripts python -m stockanalyser research RELIANCE --depth L4
+FMP_API_KEY=… python -m stockanalyser research AAPL --provider yfinance --depth L4
+```
+
 At **L5** it maintains the name: a **results review** of the latest period, **estimate
 revisions** versus the last note, **thesis tracking** (which monitorables resolved, which
 are new, the rating's trajectory), and a **preview** of what to watch next. The

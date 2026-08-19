@@ -113,6 +113,48 @@ def test_api_research_forensic_gate_in_json():
     assert r.json()["call"]["forensic_gate"] == "fail"
 
 
+# ── conviction screen ─────────────────────────────────────────────────────────
+def test_conviction_route_ranks_and_links():
+    r = client.get("/conviction", params={"q": "RELIANCE, Hitachi Energy, REDFLAG",
+                                           "side": "buy-side", "depth": "L3",
+                                           "provider": "offline"})
+    assert r.status_code == 200
+    assert "Best ideas" in r.text                    # buy-side label
+    assert "REDFLAG" in r.text and "RELIANCE" in r.text
+    assert "/research?q=" in r.text                   # rows link to full reports
+    assert "{{" not in r.text
+
+
+def test_conviction_sell_side_label_and_gate():
+    r = client.get("/conviction", params={"q": "RELIANCE,REDFLAG", "side": "sell-side",
+                                           "depth": "L3", "provider": "offline"})
+    assert r.status_code == 200
+    assert "Conviction list" in r.text
+    assert "fail" in r.text                           # REDFLAG forensic gate
+
+
+def test_conviction_bad_depth_is_400():
+    r = client.get("/conviction", params={"q": "RELIANCE", "depth": "L9",
+                                          "provider": "offline"})
+    assert r.status_code == 400
+
+
+def test_api_conviction_json_ranked():
+    r = client.get("/api/conviction", params={"q": "RELIANCE,Hitachi Energy,REDFLAG",
+                                              "side": "buy-side", "provider": "offline"})
+    assert r.status_code == 200
+    ranked = r.json()["ranked"]
+    assert len(ranked) == 3
+    convs = [x["conviction"] for x in ranked]
+    assert convs == sorted(convs, reverse=True)       # ranked best-first
+    assert ranked[-1]["ticker"].endswith("REDFLAG")   # red flag sinks to the bottom
+
+
+def test_landing_shows_conviction():
+    r = client.get("/")
+    assert "watchlist" in r.text.lower() or "conviction" in r.text.lower()
+
+
 # ── news parser (pure, offline) ──────────────────────────────────────────────
 SAMPLE_RSS = """<?xml version="1.0"?>
 <rss version="2.0"><channel>

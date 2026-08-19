@@ -8,6 +8,7 @@ assets; all CSS inline, all charts inline SVG; adapts to the viewer's theme.
 from __future__ import annotations
 
 from html import escape
+from urllib.parse import quote
 
 from ..report import charts
 
@@ -299,6 +300,101 @@ def _footer(out):
   <div class="disc">Decision-support only — not investment advice. Verify against primary filings before acting.
     Bundled/offline figures are illustrative.</div>
 </footer>"""
+
+
+def _conv_class(c: float) -> str:
+    return "r-pos" if c > 0 else "r-neu" if c > -20 else "r-neg"
+
+
+def render_universe_html(rows, side, depth: str = "L3", market: str = "",
+                         nav_html: str = "", extra_css: str = "") -> str:
+    """A conviction / best-ideas screen: names ranked by conviction, each row a
+    link into its full research report."""
+    from .mandate import Side
+    side_obj = side if isinstance(side, Side) else Side(side)
+    label = "Best ideas" if side_obj is Side.BUY_SIDE else "Conviction list"
+    call_col = "Stance" if side_obj is Side.BUY_SIDE else "Rating"
+
+    body_rows = ""
+    for i, r in enumerate(rows, 1):
+        if r.error:
+            body_rows += (f"<tr class='err'><td class='rank'>{i}</td>"
+                          f"<td class='name'>{escape(r.query)}</td>"
+                          f"<td colspan='5' class='muted'>{escape(r.error)}</td></tr>")
+            continue
+        href = (f"/research?q={quote(r.query)}&side={quote(side_obj.value)}"
+                f"&depth={quote(depth)}" + (f"&market={quote(market)}" if market else ""))
+        comp = f"{r.composite:.0f}" if r.composite is not None else "—"
+        up = (f"<span class='{'up' if r.target_upside >= 0 else 'down'}'>{r.target_upside:+.0f}%</span>"
+              if r.target_upside is not None else "—")
+        gate_cls = {"pass": "g-ok", "fail": "g-bad"}.get(r.gate, "g-na")
+        body_rows += (
+            f"<tr>"
+            f"<td class='rank'>{i}</td>"
+            f"<td class='name'><a href='{escape(href)}'>{escape(r.ticker)}</a>"
+            f"<span class='co'>{escape(r.name)}</span></td>"
+            f"<td class='num conv {_conv_class(r.conviction)}'>{r.conviction:.0f}</td>"
+            f"<td class='num'>{comp}</td>"
+            f"<td class='num'>{up}</td>"
+            f"<td><span class='gate {gate_cls}'>{escape(r.gate)}</span></td>"
+            f"<td><span class='pill {_rating_class(r.rating)}'>{escape(r.rating)}</span></td>"
+            f"</tr>")
+
+    depth_name = {"L0": "Snapshot", "L1": "Screen", "L2": "Brief", "L3": "Deep dive",
+                  "L4": "Initiation", "L5": "Coverage"}.get(depth, depth)
+    body = f"""
+<header class="uni-hero">
+  <div class="uni-kicker">{escape(side_obj.label.upper())} · {escape(depth)} {escape(depth_name).upper()}
+    {('· ' + escape(market)) if market else ''}</div>
+  <h1>{label}</h1>
+  <p class="uni-sub">{len(rows)} names ranked by conviction — return-to-target with a quality
+    tilt; forensic red flags sink to the bottom. Click a ticker for the full report.</p>
+</header>
+<section class="card uni-card">
+  <div class="tablewrap"><table class="uni">
+    <thead><tr><th class="rank">#</th><th>Name</th><th class="num">Conviction</th>
+      <th class="num">Composite</th><th class="num">Target ↑</th><th>Gate</th>
+      <th>{call_col}</th></tr></thead>
+    <tbody>{body_rows}</tbody>
+  </table></div>
+</section>
+<footer>
+  <div class="disc">Conviction = composite + return-to-target (capped ±60); a forensic red flag
+    subtracts 100. Decision-support only — not investment advice.</div>
+</footer>"""
+    return (_PAGE
+            .replace("{{TITLE}}", escape(f"{label} — {side_obj.label}"))
+            .replace("{{STYLE}}", _CSS + _UNI_CSS + extra_css)
+            .replace("{{NAV}}", nav_html)
+            .replace("{{BODY}}", body))
+
+
+_UNI_CSS = """
+.uni-hero{padding:26px 4px 8px}
+.uni-kicker{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.16em;color:var(--muted)}
+.uni-hero h1{font-size:28px;letter-spacing:-.02em;margin:8px 0 6px}
+.uni-sub{color:var(--muted);font-size:14px;max-width:70ch;margin:0}
+.uni-card{padding:6px 8px}
+table.uni{font-size:13.5px}
+table.uni th{padding:10px 12px}
+table.uni td{padding:10px 12px;vertical-align:middle}
+table.uni tr:hover td{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+table.uni .rank{width:34px;color:var(--muted);font-variant-numeric:tabular-nums}
+table.uni .name a{font-weight:700;text-decoration:none;color:var(--accent)}
+table.uni .name a:hover{text-decoration:underline}
+table.uni .name .co{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+table.uni .conv{font-weight:800}
+.conv.r-pos{color:var(--good)} .conv.r-neu{color:var(--warn)} .conv.r-neg{color:var(--bad)}
+.gate{font-family:ui-monospace,Menlo,monospace;font-size:11px;padding:2px 8px;border-radius:6px}
+.gate.g-ok{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
+.gate.g-bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.gate.g-na{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+.pill{padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.r-pos{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
+.pill.r-neg{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.pill.r-neu{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+tr.err td{color:var(--muted)}
+"""
 
 
 _PAGE = """<!doctype html>

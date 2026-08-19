@@ -89,6 +89,7 @@ def cmd_research(args):
     cfg = Config.default()
     cfg.provider = args.provider
     cfg.use_llm = not args.no_llm
+    cfg.transcripts_dir = args.transcripts
     try:
         out = research(args.query, side=args.side, depth=args.depth,
                        market=args.market, config=cfg,
@@ -175,6 +176,9 @@ def main(argv=None):
                    help="market key: US, IN, GB, EU, JP, HK, CN, AU, SG (inferred if omitted)")
     r.add_argument("--coverage-store", default=None, metavar="DIR",
                    help="directory for coverage memory (L4+); default ~/.stockanalyser/coverage")
+    r.add_argument("--transcripts", metavar="DIR", default=None,
+                   help="directory of real earnings-call transcripts to ingest "
+                        "(<SYM>/<period>.txt or <SYM>_<period>.txt); overrides bundled samples")
     r.add_argument("--html", metavar="FILE", help="write a self-contained HTML dashboard here")
     r.add_argument("--open", action="store_true", help="open the HTML dashboard in a browser")
     r.add_argument("--provider", default="auto",

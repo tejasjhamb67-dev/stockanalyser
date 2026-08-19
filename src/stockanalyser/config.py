@@ -3,6 +3,7 @@ not scattered as magic numbers across the modules."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass
@@ -73,6 +74,9 @@ class Config:
     weights: ScoreWeights = field(default_factory=ScoreWeights)
     provider: str = "auto"           # auto | offline | yfinance | alphavantage | screener
     use_llm: bool = True             # use Anthropic for narrative if a key is present
+    # directory of real earnings-call transcripts to ingest (overrides bundled samples);
+    # falls back to the $STOCKANALYSER_TRANSCRIPTS env var, then the FMP API if keyed
+    transcripts_dir: Optional[str] = None
 
     @classmethod
     def default(cls) -> "Config":
