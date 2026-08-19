@@ -15,11 +15,17 @@ def _html(name, depth, **kw):
 
 
 def test_html_is_self_contained_document():
+    import re
     html = _html("RELIANCE", "L2")
     assert html.startswith("<!doctype html>")
     for slot in ("{{TITLE}}", "{{STYLE}}", "{{BODY}}"):   # no unfilled template slots
         assert slot not in html
-    assert "http://" not in html and "https://" not in html   # no external assets
+    # the only permitted external refs are Google Fonts (a gracefully-degrading
+    # enhancement, and the one host artifacts allow); nothing else — no CDNs/scripts
+    allowed = ("https://fonts.googleapis.com", "https://fonts.gstatic.com")
+    bad = [u for u in re.findall(r"https?://[^\"')\s]+", html) if not u.startswith(allowed)]
+    assert not bad, f"unexpected external references: {bad}"
+    assert "<script" not in html.lower()
     assert "not investment advice" in html.lower()
 
 

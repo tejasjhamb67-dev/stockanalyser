@@ -218,6 +218,9 @@ _WRAP = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>{css}</style>
 </head>
 <body>
@@ -251,9 +254,12 @@ _SITE_CSS = """
 .lp-rsearch select{background:var(--panel);font-size:15px;box-shadow:var(--shadow)}
 /* landing */
 .landing{max-width:1000px;margin:0 auto;padding:20px}
-.lp-hero{text-align:center;padding:64px 16px 40px}
-.lp-kicker{font-size:12px;letter-spacing:.18em;color:var(--muted);font-weight:600}
-.lp-hero h1{font-size:clamp(34px,6vw,58px);line-height:1.05;letter-spacing:-.03em;margin:18px 0}
+.lp-hero{text-align:center;padding:66px 16px 40px}
+.lp-kicker{font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:600;
+  font-family:"IBM Plex Mono",ui-monospace,monospace}
+.lp-hero h1{font-family:"Newsreader",Georgia,serif;font-weight:500;
+  font-size:clamp(38px,6.5vw,64px);line-height:1.03;letter-spacing:-.01em;margin:18px 0}
+.lp-agent h2,.lp-lenses h2{font-family:"Newsreader",Georgia,serif;font-weight:500;letter-spacing:-.01em}
 .lp-lede{color:var(--muted);font-size:18px;max-width:60ch;margin:0 auto 28px}
 .lp-lede b{color:var(--ink)}
 .lp-search{display:flex;gap:10px;max-width:560px;margin:0 auto;flex-wrap:wrap}
