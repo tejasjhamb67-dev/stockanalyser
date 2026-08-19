@@ -18,6 +18,7 @@ available, bundled snapshots otherwise) so it always returns something.
 from __future__ import annotations
 
 import functools
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Query
@@ -48,6 +49,11 @@ app = FastAPI(
 
 _OFFLINE = OfflineProvider()
 _DEFAULT_PROVIDER = "auto"
+# coverage persistence: point at a DB (COVERAGE_DATABASE_URL / DATABASE_URL) and set
+# COVERAGE_RECORD to persist L4/L5 calls from the site; off by default so public
+# browsing never writes.
+_COVERAGE_STORE = os.environ.get("COVERAGE_DATABASE_URL") or os.environ.get("DATABASE_URL")
+_COVERAGE_RECORD = os.environ.get("COVERAGE_RECORD", "").lower() in ("1", "true", "yes")
 _FRAMEWORK_MD = Path(__file__).resolve().parents[3] / "docs" / "FRAMEWORK.md"
 
 
@@ -95,7 +101,8 @@ def _cached_research_html(query: str, side: str, depth: str, market: str,
     cfg.provider = provider
     try:
         out = run_research(query, side=side, depth=depth, market=(market or None),
-                           config=cfg, record_coverage=False)
+                           config=cfg, coverage_store=_COVERAGE_STORE,
+                           record_coverage=_COVERAGE_RECORD)
     except CompanyNotFound as exc:
         return pages.error_page(query, str(exc), _samples()), 404
     except ValueError as exc:                       # bad side/depth/market
@@ -110,7 +117,8 @@ def _cached_research_json(query: str, side: str, depth: str, market: str, provid
     cfg = Config.default()
     cfg.provider = provider
     out = run_research(query, side=side, depth=depth, market=(market or None),
-                       config=cfg, record_coverage=False)
+                       config=cfg, coverage_store=_COVERAGE_STORE,
+                       record_coverage=_COVERAGE_RECORD)
     return research_to_dict(out)
 
 

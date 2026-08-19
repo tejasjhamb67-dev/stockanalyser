@@ -174,8 +174,9 @@ def main(argv=None):
                    help="L0..L5 or a name (snapshot/screen/brief/deep-dive/initiation/coverage)")
     r.add_argument("--market", default=None,
                    help="market key: US, IN, GB, EU, JP, HK, CN, AU, SG (inferred if omitted)")
-    r.add_argument("--coverage-store", default=None, metavar="DIR",
-                   help="directory for coverage memory (L4+); default ~/.stockanalyser/coverage")
+    r.add_argument("--coverage-store", default=None, metavar="DIR|URL",
+                   help="coverage-memory store (L4+): a directory, or a SQLAlchemy URL "
+                        "(sqlite:///cov.db, postgresql://…); default ~/.stockanalyser/coverage")
     r.add_argument("--transcripts", metavar="DIR", default=None,
                    help="directory of real earnings-call transcripts to ingest "
                         "(<SYM>/<period>.txt or <SYM>_<period>.txt); overrides bundled samples")

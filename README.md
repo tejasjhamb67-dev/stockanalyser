@@ -78,8 +78,16 @@ At **L4** it assembles a full **initiation report** — industry primer, thesis,
 **estimates** with a **variant-vs-consensus** read, the triangulated valuation, risks, and a
 **catalyst calendar** — and writes to **coverage memory**: the first run initiates coverage,
 later runs become updates that say exactly what changed (rating moves, target revisions,
-thesis drift). The store is a plain JSON directory (`--coverage-store`, default
-`~/.stockanalyser/coverage`).
+thesis drift). The store is a plain JSON directory by default (`--coverage-store`, default
+`~/.stockanalyser/coverage`) — or a **database** when you point it at a SQLAlchemy URL, so
+coverage survives across a deployment's restarts and instances:
+
+```bash
+pip install -e ".[db]"       # SQLAlchemy + psycopg
+python -m stockanalyser research RELIANCE --depth L4 --coverage-store "sqlite:///coverage.db"
+# in production the app reads $DATABASE_URL (Postgres); set COVERAGE_RECORD=1 to persist
+# L4/L5 calls made through the website. The Render blueprint provisions a free Postgres.
+```
 
 The consensus is **real sell-side data** when a live provider supplies it — the yfinance
 adapter pulls the analyst **mean/high/low price target**, the **ratings distribution**, and

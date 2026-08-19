@@ -13,7 +13,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 COPY docs ./docs
 
-RUN pip install --upgrade pip && pip install ".[web,live]"
+RUN pip install --upgrade pip && pip install ".[web,live,db]"
 
 EXPOSE 8000
 
