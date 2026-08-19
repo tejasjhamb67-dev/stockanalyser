@@ -14,22 +14,28 @@ from ..config import Config
 from ..models import Company, CompanyData
 from .base import DataProvider
 from .offline import OfflineProvider
-from .live import AlphaVantageProvider, ScreenerProvider, YFinanceProvider
+from .live import (
+    AlphaVantageProvider, FMPProvider, ScreenerProvider, YFinanceProvider,
+)
 
 
 def build_chain(config: Config) -> list[DataProvider]:
     offline = OfflineProvider()
     if config.provider == "offline":
         return [offline]
+    if config.provider == "fmp":
+        return [FMPProvider(), offline]
     if config.provider == "yfinance":
         return [YFinanceProvider(), offline]
     if config.provider == "alphavantage":
         return [AlphaVantageProvider(), offline]
     if config.provider == "screener":
         return [ScreenerProvider(), offline]
-    # auto: try live providers that declare themselves available, else offline
+    # auto: try live providers that declare themselves available, else offline.
+    # FMP first — a keyed API is reliable from servers where yfinance (Yahoo scraping)
+    # gets blocked from datacenter IPs.
     chain: list[DataProvider] = []
-    for p in (YFinanceProvider(), AlphaVantageProvider()):
+    for p in (FMPProvider(), YFinanceProvider(), AlphaVantageProvider()):
         try:
             if p.available():
                 chain.append(p)

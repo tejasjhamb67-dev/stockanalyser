@@ -21,9 +21,13 @@ services:
       # Record L4/L5 calls made through the site (off unless set to 1).
       - key: COVERAGE_RECORD
         value: "1"
-      # Optional — enables live data / LLM narrative. Leave unset to run on
-      # bundled illustrative snapshots + the deterministic narrative.
-      - key: ALPHAVANTAGE_API_KEY
+      # RECOMMENDED — a free key from financialmodelingprep.com makes live data work
+      # for ANY ticker, reliably from a server (yfinance/Yahoo is blocked from cloud
+      # IPs). Without it the app runs on bundled illustrative snapshots.
+      - key: FMP_API_KEY
         sync: false
+      # Optional — LLM-written analyst narrative (else a deterministic one is used).
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALPHAVANTAGE_API_KEY
         sync: false
