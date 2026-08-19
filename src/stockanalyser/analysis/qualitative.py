@@ -95,6 +95,7 @@ def analyse(data: CompanyData) -> LensResult:
     flags = _redflags(latest.transcript)
 
     res.data["latest_period"] = latest.period
+    res.data["source"] = latest.source or "unknown"
     res.data["sentiment"] = sent
     res.data["themes"] = themes
     res.data["guidance"] = guidance

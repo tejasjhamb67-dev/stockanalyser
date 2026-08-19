@@ -95,4 +95,14 @@ def resolve_and_fetch(query: str, config: Config) -> Optional[tuple[Company, Com
             except Exception:
                 pass
 
+    # Ingest real earnings-call transcripts (local dir or FMP) if configured — these
+    # replace the bundled illustrative samples. Runs for every provider, incl. offline.
+    try:
+        from .transcripts import ingest_transcripts
+        real_calls = ingest_transcripts(company, config)
+        if real_calls:
+            data.earnings_calls = real_calls
+    except Exception:
+        pass
+
     return company, data, provider.name
