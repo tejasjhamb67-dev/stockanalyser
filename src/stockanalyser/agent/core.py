@@ -26,7 +26,7 @@ from .coverage import (
     earnings_preview, earnings_review, estimate_revisions, thesis_tracker,
 )
 from .mandate import Depth, Mandate, MandateRouter, Side
-from .memory import CoverageEntry, CoverageMemory, coverage_note, now_date
+from .memory import CoverageEntry, coverage_note, now_date, open_coverage_memory
 from .narrative import build_narrative
 from .planner import ResearchPlan, plan_research
 from .products import Call
@@ -199,7 +199,7 @@ def _update_coverage(company, mandate, call, appraisal, composite, verdict, moni
         est_rev_fy1=est.get("Revenue"), est_ebitda_fy1=est.get("EBITDA"),
         est_eps_fy1=est.get("EPS"))
     try:
-        mem = CoverageMemory(store)
+        mem = open_coverage_memory(store)
         history = mem.history(company.symbol)         # prior calls (excludes this one)
         prev = history[-1] if history else None
         note = coverage_note(prev, entry)

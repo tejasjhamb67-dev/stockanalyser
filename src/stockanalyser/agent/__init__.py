@@ -23,7 +23,10 @@ from .coverage import (
 )
 from .mandate import Depth, Mandate, MandateRouter, Side
 from .markets import MarketProfile, PROFILES, infer_profile
-from .memory import CoverageEntry, CoverageMemory, coverage_note
+from .memory import (
+    CoverageEntry, CoverageMemory, SqlCoverageMemory, coverage_note,
+    open_coverage_memory,
+)
 from .modeling import Assumptions, Projection, build_projection, derive_assumptions
 from .narrative import build_narrative
 from .planner import ResearchPlan, plan_research
@@ -42,7 +45,8 @@ __all__ = [
     "Assumptions", "Projection", "build_projection", "derive_assumptions",
     "ConsensusView", "build_consensus",
     "Catalyst", "build_catalysts",
-    "CoverageEntry", "CoverageMemory", "coverage_note",
+    "CoverageEntry", "CoverageMemory", "SqlCoverageMemory", "coverage_note",
+    "open_coverage_memory",
     "EarningsReview", "EarningsPreview", "RevisionLine", "ThesisTracker",
     "earnings_review", "earnings_preview", "estimate_revisions", "thesis_tracker",
     "UniverseRow", "rank_universe", "render_conviction_list",
