@@ -542,6 +542,30 @@ class FMPProvider(DataProvider):
         rating = _safe(f"/api/v3/rating/{company.symbol}")
         return parse_fmp_street(company.symbol, target, rating)
 
+    def screener_raw(self, *, sector: Optional[str] = None, industry: Optional[str] = None,
+                     country: Optional[str] = None, exchange: Optional[str] = None,
+                     limit: int = 200, market_cap_more_than: Optional[float] = None) -> list:
+        """Raw FMP stock-screener payload (list of dicts), for the sector/industry
+        browse universe. Returns [] on any failure so the caller can fall back."""
+        if not self.available():
+            raise ProviderUnavailable("FMP_API_KEY not set")
+        params: dict = {"limit": limit, "isActivelyTrading": "true"}
+        if sector:
+            params["sector"] = sector
+        if industry:
+            params["industry"] = industry
+        if country:
+            params["country"] = country
+        if exchange:
+            params["exchange"] = exchange
+        if market_cap_more_than is not None:
+            params["marketCapMoreThan"] = market_cap_more_than
+        try:
+            payload = self._get("/api/v3/stock-screener", **params)
+        except Exception:
+            return []
+        return payload if isinstance(payload, list) else []
+
 
 # ── FMP pure mappers (network-free, unit-tested) ─────────────────────────────
 _FMP_EXCHANGE = {"HKSE": "HKEX", "SHH": "SSE", "SHZ": "SZSE", "JPX": "TSE",

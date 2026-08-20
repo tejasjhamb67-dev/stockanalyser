@@ -4,11 +4,40 @@ visual system, light/dark aware."""
 from __future__ import annotations
 
 from html import escape
+from urllib.parse import quote
 
 from ..models import Company
 from ..report.dashboard import _CSS
+from ..data.universe import SECTORS, MARKETS
 
 BRAND = "stockanalyser"
+
+_CCY = {"USD": "$", "INR": "₹", "GBP": "£", "EUR": "€", "JPY": "¥",
+        "HKD": "HK$", "AUD": "A$", "SGD": "S$", "CNY": "¥", "CAD": "C$"}
+
+
+def _mcap(v, ccy: str = "USD") -> str:
+    if not v:
+        return "—"
+    sym = _CCY.get(ccy, (ccy + " ") if ccy else "$")
+    for div, suf in ((1e12, "T"), (1e9, "B"), (1e6, "M")):
+        if abs(v) >= div:
+            return f"{sym}{v / div:,.1f}{suf}"
+    return f"{sym}{v:,.0f}"
+
+
+def _price(v, ccy: str = "USD") -> str:
+    if v is None:
+        return "—"
+    return f"{_CCY.get(ccy, '')}{v:,.2f}"
+
+
+def _sector_menu() -> str:
+    """CSS-only (no-JS) dropdown of sectors for the nav bar."""
+    links = "".join(f"<a href='/browse?sector={quote(s)}'>{escape(s)}</a>" for s in SECTORS)
+    return (f"<div class='navmenu'><a href='/browse' class='navlink'>Sectors ▾</a>"
+            f"<div class='navmenu-pop'>{links}"
+            f"<a class='navmenu-all' href='/browse'>All sectors →</a></div></div>")
 
 
 def nav_bar(query: str = "") -> str:
@@ -21,6 +50,7 @@ def nav_bar(query: str = "") -> str:
            autocomplete="off" list="samples" aria-label="Company">
     <button type="submit">Analyse</button>
   </form>
+  {_sector_menu()}
   <a href="/framework" class="navlink">Framework</a>
 </nav>
 {_datalist()}"""
@@ -52,6 +82,7 @@ def research_nav(query: str = "", side: str = "sell-side", depth: str = "L4",
     <select name="market" aria-label="Market">{markets}</select>
     <button type="submit">Research</button>
   </form>
+  {_sector_menu()}
   <a href="/analyse?q={escape(query)}" class="navlink">Quick view</a>
 </nav>
 {_datalist()}"""
@@ -77,6 +108,7 @@ def conviction_nav(query: str = "", side: str = "sell-side", depth: str = "L3",
     <select name="market" aria-label="Market">{markets}</select>
     <button type="submit">Rank</button>
   </form>
+  {_sector_menu()}
   <a href="/" class="navlink">Home</a>
 </nav>
 {_datalist()}"""
@@ -172,8 +204,19 @@ def landing_page(samples: list[Company]) -> str:
     </form>
   </section>
 
+  <section class="lp-agent">
+    <div class="lp-kicker">SECTOR SCREEN</div>
+    <h2>Or browse the market by sector</h2>
+    <p class="lp-lede">Every sector and industry, the top 50 names ranked by market
+      cap — pick any market, drill into an industry, and click a ticker for its full
+      report.</p>
+    <div class="lp-samples">{"".join(f"<a class='samplechip' href='/browse?sector={quote(s)}'><b>{escape(s)}</b><span>top 50 →</span></a>" for s in SECTORS[:8])}</div>
+    <div class="lp-cta" style="padding:24px 0 0"><a class="lp-btn" href="/browse">Browse all sectors →</a></div>
+  </section>
+
   <section class="lp-cta">
     <a class="lp-btn" href="/research?q=POWERINDIA&side=sell-side&depth=L4">See an initiation report →</a>
+    <a class="lp-link" href="/browse">Browse by sector</a>
     <a class="lp-link" href="/conviction?q=RELIANCE,Hitachi%20Energy,REDFLAG&side=buy-side">Conviction list</a>
     <a class="lp-link" href="/analyse?q=POWERINDIA">Quick dashboard</a>
     <a class="lp-link" href="/framework">Framework</a>
@@ -209,6 +252,116 @@ def error_page(query: str, message: str, samples: list[Company]) -> str:
   </section>
 </main>
 {_datalist(samples)}""",
+    )
+
+
+def _market_form(sector: str = "", industry: str = "", current: str = "") -> str:
+    opts = "".join(
+        f"<option value='{escape(k)}'{' selected' if k == current else ''}>{escape(lbl)}</option>"
+        for k, (lbl, _) in MARKETS.items())
+    hidden = ""
+    if sector:
+        hidden += f"<input type='hidden' name='sector' value='{escape(sector)}'>"
+    if industry:
+        hidden += f"<input type='hidden' name='industry' value='{escape(industry)}'>"
+    return (f"<form class='mkt-form' action='/browse' method='get'>{hidden}"
+            f"<label>Market</label><select name='market'>{opts}</select>"
+            f"<button type='submit'>Go</button></form>")
+
+
+def browse_index_page(samples: list[Company], market: str = "") -> str:
+    mlabel = MARKETS.get(market, ("Global", None))[0]
+    cards = "".join(
+        f"<a class='sec-card' href='/browse?sector={quote(s)}"
+        f"{('&market=' + quote(market)) if market else ''}'>"
+        f"<span class='sec-name'>{escape(s)}</span>"
+        f"<span class='sec-go'>Top 50 →</span></a>"
+        for s in SECTORS)
+    return _WRAP.format(
+        title=f"Browse by sector — {BRAND}",
+        css=_CSS + _SITE_CSS,
+        nav=nav_bar(),
+        body=f"""
+<main class="wrap">
+  <header class="uni-hero">
+    <div class="uni-kicker">MARKET SCREEN · {escape(mlabel).upper()}</div>
+    <h1>Browse by sector</h1>
+    <p class="uni-sub">Clusters of the market's largest names, ranked by market
+      capitalisation. Pick a sector for its top 50 — drill into an industry, switch
+      markets, and click any ticker for the full research report.</p>
+    {_market_form(current=market)}
+  </header>
+  <section class="sec-grid">{cards}</section>
+  <footer class="lp-foot">Live listings via FMP (a paid plan covers non-US markets);
+    bundled sample names otherwise. Decision-support only — not investment advice.</footer>
+</main>
+{_datalist(samples)}""",
+    )
+
+
+def sector_page(sector: str, rows, industries, source: str, market: str = "",
+                industry: str = "", samples: list[Company] | None = None) -> str:
+    mlabel = MARKETS.get(market, ("Global", None))[0]
+    mkt_qs = ("&market=" + quote(market)) if market else ""
+
+    chips = (f"<a class='ind-chip{' on' if not industry else ''}' "
+             f"href='/browse?sector={quote(sector)}{mkt_qs}'>All industries</a>")
+    for ind in industries:
+        on = " on" if ind.lower() == industry.lower() else ""
+        chips += (f"<a class='ind-chip{on}' href='/browse?sector={quote(sector)}"
+                  f"&industry={quote(ind)}{mkt_qs}'>{escape(ind)}</a>")
+
+    body_rows = ""
+    for i, r in enumerate(rows, 1):
+        research = f"/research?q={quote(r.symbol)}"
+        chart = f"/analyse?q={quote(r.symbol)}"
+        body_rows += (
+            f"<tr>"
+            f"<td class='rank'>{i}</td>"
+            f"<td class='name'><a href='{escape(research)}'>{escape(r.symbol)}</a>"
+            f"<span class='co'>{escape(r.name)}</span></td>"
+            f"<td class='ind'>{escape(r.industry or '—')}</td>"
+            f"<td class='exch'>{escape(r.exchange or '—')}</td>"
+            f"<td class='num'>{escape(_mcap(r.market_cap, r.currency))}</td>"
+            f"<td class='num'>{escape(_price(r.price, r.currency))}</td>"
+            f"<td class='act'><a href='{escape(chart)}'>chart</a></td>"
+            f"</tr>")
+    if not body_rows:
+        body_rows = ("<tr><td colspan='7' class='muted'>No listings returned for this "
+                     "filter. Try a different market, or set FMP_API_KEY for live coverage.</td></tr>")
+
+    off = ""
+    if source != "fmp":
+        off = ("<div class='cov'>Showing bundled sample names — set <b>FMP_API_KEY</b> "
+               "(a paid plan for non-US markets) for the live top-50 screen.</div>")
+
+    return _WRAP.format(
+        title=f"{sector} — top names — {BRAND}",
+        css=_CSS + _SITE_CSS,
+        nav=nav_bar(),
+        body=f"""
+<main class="wrap">
+  <header class="uni-hero">
+    <div class="uni-kicker">SECTOR SCREEN · {escape(mlabel).upper()}
+      {('· ' + escape(industry).upper()) if industry else ''}</div>
+    <h1>{escape(sector)}</h1>
+    <p class="uni-sub">Top {len(rows)} names by market cap · source
+      <b>{escape(source)}</b>. Click a ticker for the full research report.</p>
+    {_market_form(sector=sector, industry=industry, current=market)}
+    <div class="ind-chips">{chips}</div>
+  </header>
+  {off}
+  <section class="card uni-card">
+    <div class="tablewrap"><table class="uni">
+      <thead><tr><th class="rank">#</th><th>Name</th><th>Industry</th><th>Exch</th>
+        <th class="num">Mkt cap</th><th class="num">Price</th><th></th></tr></thead>
+      <tbody>{body_rows}</tbody>
+    </table></div>
+  </section>
+  <footer class="lp-foot">Ranked by market capitalisation. Decision-support only —
+    not investment advice.</footer>
+</main>
+{_datalist(samples or [])}""",
     )
 
 
@@ -300,4 +453,57 @@ _SITE_CSS = """
 .prose blockquote{border-left:3px solid var(--accent);margin:14px 0;padding:2px 16px;color:var(--muted)}
 .prose a{color:var(--accent)}
 .errcard a{color:var(--accent)}
+/* nav sectors dropdown (CSS-only) */
+.navmenu{position:relative}
+.navmenu-pop{display:none;position:absolute;top:100%;right:0;min-width:210px;z-index:30;
+  background:var(--panel);border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);
+  padding:6px;flex-direction:column;gap:1px}
+.navmenu:hover .navmenu-pop,.navmenu:focus-within .navmenu-pop{display:flex}
+.navmenu-pop a{color:var(--ink);text-decoration:none;font-size:12.5px;padding:6px 10px;border-radius:3px}
+.navmenu-pop a:hover{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+.navmenu-all{border-top:1px solid var(--line);margin-top:4px;color:var(--accent)!important}
+/* browse hero (mirrors the conviction screen) */
+.uni-hero{padding:24px 4px 10px}
+.uni-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--accent);text-transform:uppercase}
+.uni-hero h1{font-size:28px;margin:10px 0 8px;text-transform:uppercase;letter-spacing:.01em;font-family:var(--mono)}
+.uni-sub{color:var(--muted);font-size:13px;max-width:74ch;margin:0 0 14px;line-height:1.6}
+.uni-sub b{color:var(--ink)}
+/* market form + industry chips */
+.mkt-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.mkt-form label{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.mkt-form select{padding:7px 10px;border-radius:3px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font-size:12.5px;font-family:var(--mono);cursor:pointer}
+.mkt-form button{border:1px solid var(--accent);background:var(--accent);color:#06080b;font-weight:600;
+  padding:7px 14px;border-radius:3px;cursor:pointer;font-size:12px;font-family:var(--mono);
+  text-transform:uppercase;letter-spacing:.04em}
+.ind-chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 2px}
+.ind-chip{text-decoration:none;color:var(--muted);border:1px solid var(--line);background:var(--panel2);
+  border-radius:3px;padding:3px 10px;font-size:11.5px}
+.ind-chip:hover{border-color:var(--accent);color:var(--accent)}
+.ind-chip.on{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+/* sector grid (browse index) */
+.sec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:16px 0}
+.sec-card{display:flex;justify-content:space-between;align-items:center;text-decoration:none;
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:3px;padding:16px 18px;box-shadow:var(--shadow)}
+.sec-card:hover{border-color:var(--accent)}
+.sec-name{color:var(--ink);font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:.02em}
+.sec-go{color:var(--muted);font-size:11.5px}
+.sec-card:hover .sec-go{color:var(--accent)}
+/* browse table (reuses the conviction terminal look) */
+.cov{background:color-mix(in srgb,var(--accent) 9%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+  border-left:3px solid var(--accent);border-radius:3px;padding:8px 14px;font-size:12.5px;margin:12px 0}
+.cov b{color:var(--accent)}
+.uni-card{padding:4px 6px}
+table.uni{font-size:12.5px;min-width:680px}
+table.uni th{padding:9px 12px}
+table.uni td{padding:9px 12px;vertical-align:middle;border-bottom:1px solid var(--grid)}
+table.uni tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+table.uni .rank{width:34px;color:var(--muted);font-variant-numeric:tabular-nums}
+table.uni .name a{font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;font-weight:600;text-decoration:none;color:var(--accent)}
+table.uni .name a:hover{text-decoration:underline}
+table.uni .name .co{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+table.uni .ind,table.uni .exch{color:var(--muted);font-size:11.5px}
+table.uni .act a{color:var(--muted);text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+table.uni .act a:hover{color:var(--accent)}
 """

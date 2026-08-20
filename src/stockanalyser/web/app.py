@@ -26,6 +26,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from ..config import Config
 from ..data.offline import OfflineProvider
+from ..data.universe import SECTORS, canonical_sector, build_universe
 from ..report import (
     CompanyNotFound,
     build_report,
@@ -193,6 +194,49 @@ def api_conviction(q: str = Query(..., min_length=1), side: str = Query("sell-si
                         "target_upside": r.target_upside, "gate": r.gate,
                         "rating": r.rating, "verdict": r.verdict, "error": r.error or None}
                        for i, r in enumerate(rows, 1)]}
+
+
+@functools.lru_cache(maxsize=256)
+def _cached_universe(sector: str, industry: str, market: str, provider: str):
+    cfg = Config.default()
+    cfg.provider = provider
+    return build_universe(sector=sector, industry=(industry or None),
+                          market=market, limit=50, config=cfg)
+
+
+@app.get("/browse", response_class=HTMLResponse)
+def browse(sector: str = Query("", description="sector name, or empty for the index"),
+           industry: str = Query("", description="optional industry filter"),
+           market: str = Query("", description="market key (US, IN, GB, …) or empty for global"),
+           provider: str = Query(_DEFAULT_PROVIDER)):
+    if not sector:
+        return HTMLResponse(pages.browse_index_page(_samples(), market=market))
+    canon = canonical_sector(sector)
+    if canon is None:
+        return HTMLResponse(
+            pages.error_page(sector, f"Unknown sector. Try one of: {', '.join(SECTORS)}.",
+                             _samples()), status_code=404)
+    rows, industries, source = _cached_universe(canon, industry, market, provider)
+    html = pages.sector_page(canon, rows, industries, source, market=market,
+                             industry=industry, samples=_samples())
+    return HTMLResponse(html)
+
+
+@app.get("/api/universe")
+def api_universe(sector: str = Query(..., description="sector name"),
+                 industry: str = Query(""), market: str = Query(""),
+                 provider: str = Query(_DEFAULT_PROVIDER)):
+    canon = canonical_sector(sector)
+    if canon is None:
+        return JSONResponse({"error": "unknown sector", "sectors": SECTORS}, status_code=404)
+    rows, industries, source = _cached_universe(canon, industry, market, provider)
+    return {"sector": canon, "market": market, "industry": industry or None,
+            "source": source, "industries": industries,
+            "count": len(rows),
+            "results": [{"rank": i, "symbol": r.symbol, "name": r.name,
+                         "industry": r.industry, "exchange": r.exchange,
+                         "market_cap": r.market_cap, "price": r.price,
+                         "currency": r.currency} for i, r in enumerate(rows, 1)]}
 
 
 @app.get("/framework", response_class=HTMLResponse)
