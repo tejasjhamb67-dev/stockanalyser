@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "analyser-agent": {
+      "command": "bash",
+      "args": ["tools/analyser-agent/launch.sh"]
+    }
+  }
+}

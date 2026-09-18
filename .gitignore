@@ -22,6 +22,10 @@ htmlcov/
 !src/stockanalyser/data/samples/*.json
 !docs/**/*.json
 !docs/**/*.html
+!.mcp.json
+
+# Analyser agent (modelforge MCP) — self-provisioned virtualenv (see tools/analyser-agent/)
+tools/analyser-agent/.venv/
 
 # editors / OS
 .DS_Store
