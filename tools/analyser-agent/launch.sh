@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #
-# Self-provisioning launcher for the modelforge-finance MCP server.
+# Self-provisioning launcher for the "Analyser agent" — the modelforge-finance
+# MCP server.
 #
-# modelforge is wired in as a *separate agent* (its own toolset), independent of
-# the stockanalyser analysis engine. This script gives it an isolated virtualenv
+# It is wired in as a *separate agent* (its own toolset), independent of the
+# stockanalyser analysis engine. This script gives it an isolated virtualenv
 # so its dependencies never collide with the project's, provisions it on first
 # run, and then hands control to the stdio MCP server.
 #
@@ -33,11 +34,11 @@ if [ ! -x "$VENV/bin/modelforge-mcp" ]; then
   # Provision on first run. Log to stderr so we never corrupt the stdio
   # JSON-RPC stream the MCP client reads on stdout.
   {
-    echo "[modelforge-mcp] provisioning virtualenv at $VENV ..."
+    echo "[analyser-agent] provisioning virtualenv at $VENV ..."
     "$PYTHON_BIN" -m venv "$VENV"
     "$VENV/bin/pip" install --quiet --upgrade pip
     "$VENV/bin/pip" install --quiet "$SPEC" "$MCP_PIN"
-    echo "[modelforge-mcp] ready."
+    echo "[analyser-agent] ready."
   } 1>&2
 fi
 

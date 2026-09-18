@@ -1,41 +1,43 @@
-# modelforge — a separate agent, wired in over MCP
+# Analyser agent — a separate agent, wired in over MCP
 
-[`modelforge-finance`](https://pypi.org/project/modelforge-finance/) is a
-**bulge-tier Excel financial-model factory** — every cell live-formulated, every
-number traceable, MCP-native. It's wired into this repo as its **own agent**: a
+The **Analyser agent** is
+[`modelforge-finance`](https://pypi.org/project/modelforge-finance/) wired into
+this repo as its own agent over MCP — a **bulge-tier Excel financial-model
+factory**: every cell live-formulated, every number traceable, MCP-native. It's a
 standalone toolset that runs alongside the stockanalyser analysis engine, not
-inside it. stockanalyser turns a name into a framework + dashboard; modelforge
-turns a spec into a fully-formulated, audited Excel model (and PPTX/DOCX decks).
-Use whichever the job calls for — or both.
+inside it. stockanalyser turns a name into a framework + dashboard; the Analyser
+agent turns a spec into a fully-formulated, audited Excel model (and PPTX/DOCX
+decks). Use whichever the job calls for — or both.
 
-> Third-party package (author: *Whatsonyourmind*), pinned at the version tested
-> here (`0.12.0`). It is not maintained by this project. Review its behaviour and
-> the API keys you give it before relying on it for real work.
+> Powered by the third-party package `modelforge-finance` (author:
+> *Whatsonyourmind*), pinned at the version tested here (`0.12.0`). It is not
+> maintained by this project. Review its behaviour and the API keys you give it
+> before relying on it for real work.
 
 ---
 
 ## Wiring (default: self-provisioning)
 
 The repo ships a project-scoped [`.mcp.json`](../.mcp.json) that registers the
-`modelforge` server through a launcher:
+`analyser-agent` server through a launcher:
 
 ```json
 {
   "mcpServers": {
-    "modelforge": {
+    "analyser-agent": {
       "command": "bash",
-      "args": ["tools/modelforge-mcp/launch.sh"]
+      "args": ["tools/analyser-agent/launch.sh"]
     }
   }
 }
 ```
 
 Open this repo in an MCP client that reads project `.mcp.json` (e.g. Claude Code)
-and `modelforge` appears as an agent. On first launch,
-[`tools/modelforge-mcp/launch.sh`](../tools/modelforge-mcp/launch.sh) builds an
+and the **Analyser agent** appears as an agent. On first launch,
+[`tools/analyser-agent/launch.sh`](../tools/analyser-agent/launch.sh) builds an
 isolated virtualenv, installs `modelforge-finance[mcp,export]` with the correct
 `mcp` pin, and execs the stdio server. Subsequent launches reuse the venv and
-start instantly. The venv (`tools/modelforge-mcp/.venv/`) is git-ignored.
+start instantly. The venv (`tools/analyser-agent/.venv/`) is git-ignored.
 
 Nothing about stockanalyser's own code, dependencies, or CLI changes.
 
@@ -51,7 +53,7 @@ pip install "modelforge-finance[mcp,export]" "mcp>=1.12,<2"
 ```json
 {
   "mcpServers": {
-    "modelforge": { "command": "modelforge-mcp" }
+    "analyser-agent": { "command": "modelforge-mcp" }
   }
 }
 ```
@@ -87,10 +89,10 @@ inputs (`fundamentals`, `history`, `quote`) before you build.
 
 ## API keys (all optional)
 
-modelforge runs in a demo mode with no keys. To pull real data, set any of the
-provider keys it reads from the environment — they're inherited by the launcher,
-so set them in your MCP client. The ones that overlap with what stockanalyser
-already uses:
+The Analyser agent runs in a demo mode with no keys. To pull real data, set any
+of the provider keys it reads from the environment — they're inherited by the
+launcher, so set them in your MCP client. The ones that overlap with what
+stockanalyser already uses:
 
 - `FMP_API_KEY` — Financial Modeling Prep (also stockanalyser's recommended provider)
 - `ALPHAVANTAGE_API_KEY`
@@ -104,8 +106,8 @@ Refinitiv/Eikon, Bloomberg). `data_providers_status` reports which are live.
 
 ```bash
 # force a clean re-provision of the agent's venv
-rm -rf tools/modelforge-mcp/.venv
-bash tools/modelforge-mcp/launch.sh </dev/null   # provisions, then waits on stdio (Ctrl-C to exit)
+rm -rf tools/analyser-agent/.venv
+bash tools/analyser-agent/launch.sh </dev/null   # provisions, then waits on stdio (Ctrl-C to exit)
 ```
 
 If the server won't start after a manual install, confirm the pin took:

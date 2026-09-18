@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "modelforge": {
+    "analyser-agent": {
       "command": "bash",
-      "args": ["tools/modelforge-mcp/launch.sh"]
+      "args": ["tools/analyser-agent/launch.sh"]
     }
   }
 }

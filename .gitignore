@@ -24,8 +24,8 @@ htmlcov/
 !docs/**/*.html
 !.mcp.json
 
-# modelforge MCP agent — self-provisioned virtualenv (see tools/modelforge-mcp/)
-tools/modelforge-mcp/.venv/
+# Analyser agent (modelforge MCP) — self-provisioned virtualenv (see tools/analyser-agent/)
+tools/analyser-agent/.venv/
 
 # editors / OS
 .DS_Store
