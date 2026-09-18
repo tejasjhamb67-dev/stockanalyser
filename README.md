@@ -171,6 +171,17 @@ curl "localhost:8000/research?q=RELIANCE&side=sell-side&depth=L4"
 curl "localhost:8000/api/research?q=RELIANCE&side=buy-side&depth=L3"
 ```
 
+### modelforge agent (MCP)
+
+Alongside the analysis engine, this repo wires in
+[**modelforge-finance**](https://pypi.org/project/modelforge-finance/) as a
+*separate agent* over MCP — a live-formulated, fully-audited Excel model factory
+(spec → build → QC/audit → export to xlsx/pptx/docx). Open the repo in an MCP
+client that reads project `.mcp.json` (e.g. Claude Code) and the `modelforge`
+server self-provisions on first launch; stockanalyser's own code is untouched.
+Full setup, the tool catalogue, the required `mcp<2` pin, and API keys are in
+[`docs/MODELFORGE.md`](docs/MODELFORGE.md).
+
 ### From Python:
 
 ```python

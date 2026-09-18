@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "modelforge": {
+      "command": "bash",
+      "args": ["tools/modelforge-mcp/launch.sh"]
+    }
+  }
+}
